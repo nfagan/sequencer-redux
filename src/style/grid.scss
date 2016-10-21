@@ -1,0 +1,69 @@
+.grid__container {
+	width: 100vw;
+	height: 100vh;
+	// display: flex;
+	// justify-content: center;
+	// align-items: center;
+	overflow: scroll;
+}
+
+.grid {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	width: 95%;
+	max-width: 500px;
+	height: 95%;
+	max-height: 300px;
+}
+
+.controls {
+	order: 1;
+	flex-basis: 50px;
+	flex-shrink: 0;
+}
+
+.sounds {
+	order: 2;
+	overflow-y: scroll;
+}
+
+.row {
+	display: flex;
+	min-height: 50px;
+}
+
+.cell {
+	min-width: 50px;
+	flex-grow: 1;
+	height: 50px;
+	box-sizing: border-box;
+}
+
+.cell__sound {
+	height: 100%; width: 100%;
+	background-color: yellow;
+}
+
+.cell__controls {
+	display: flex; align-items: center; justify-content: center;
+}
+
+
+//	sound selector
+
+.soundSelector {
+	position: absolute;
+	top: 0; right: 0;
+	height: 100%; width: 25%;
+	background-color: red; opacity: 1;
+	overflow: scroll;
+}
+
+.soundSelector--visible {
+	display: flex; justify-content: center;
+}
+
+.soundSelector--hidden {
+	display: none;
+}
