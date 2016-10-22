@@ -248,7 +248,7 @@
 
 			//	create a new bite on double tap
 
-			interact(biteClass).on('click', function (event) {
+			interact(biteClass).on('down', function (event) {
 
 				//	to make web audio work properly in iOS
 

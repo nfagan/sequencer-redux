@@ -160,7 +160,7 @@ Interface.prototype = {
 		//	create a new bite on double tap
 
 		interact(biteClass)
-			.on('click', function(event) {
+			.on('down', function(event) {
 
 				//	to make web audio work properly in iOS
 
