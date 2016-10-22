@@ -265,6 +265,7 @@
 				template.type = 'inGrid';
 				template.container = container;
 				template.audioParams = ctx.audioManager.getDefaultAudioParams();
+				template.makeCenter = true; //	center the element
 
 				//	show the grid
 
@@ -6939,11 +6940,11 @@
 
 			if (dockedCell === -1) return;
 
-			// dockedCell.element.removeChild(soundbite.element)
-			// soundbite.template.container.appendChild(soundbite.element)
+			dockedCell.element.removeChild(soundbite.element);
+			soundbite.template.container.appendChild(soundbite.element);
 			dockedCell.isEmpty = true;
 
-			soundbite.setUndocked();
+			soundbite.setUndocked(event);
 		},
 
 		isInsideGridBounds: function isInsideGridBounds(element) {
@@ -7285,6 +7286,10 @@
 		if (template.container != null) {
 			template.container.appendChild(this.element);
 		}
+
+		if (template.makeCenter) {
+			this.center();
+		}
 	}
 
 	SoundBite.prototype = {
@@ -7317,12 +7322,18 @@
 		setUndocked: function setUndocked(event) {
 			var element = this.element,
 			    dockedClass = this.classNames.dockedInGrid,
-			    undockedClass = this.classNames.undockedInGrid;
+			    undockedClass = this.classNames.undockedInGrid,
+			    elementRect = element.getBoundingClientRect();
 
 			element.classList.remove(dockedClass);
 			element.classList.add(undockedClass);
 
-			element.style.backgroundColor = this.template.color;
+			_helpers2.default.setStyle(element, {
+				backgroundColor: this.template.color,
+				position: 'fixed',
+				top: _helpers2.default.toPixels(event.clientY - 50 / 2),
+				left: _helpers2.default.toPixels(event.clientX - 50 / 2)
+			});
 
 			element.setAttribute('data-x', 0);
 			element.setAttribute('data-y', 0);
@@ -7331,34 +7342,48 @@
 			this.gridId = null;
 		},
 
-		setPosition: function setPosition() {
+		center: function center() {
 			var element = this.element,
-			    cell = this.containerCell,
-			    cellRect = cell.getBoundingClientRect();
+			    windowWidth = window.innerWidth,
+			    windowHeight = window.innerHeight,
+			    width = element.getBoundingClientRect().width,
+			    height = element.getBoundingClientRect().height;
 
-			var top = _helpers2.default.toPixels(cellRect.top),
-			    left = _helpers2.default.toPixels(cellRect.left);
-
-			_helpers2.default.setStyle(element, { top: top, left: left });
-		},
-
-		setDimensions: function setDimensions() {
-			var element = this.element,
-			    cell = this.containerCell,
-			    cellRect = cell.getBoundingClientRect(),
-			    width = _helpers2.default.toPixels(cellRect.width),
-			    height = _helpers2.default.toPixels(cellRect.height);
-
-			_helpers2.default.setStyle(element, { width: width, height: height });
-		},
-
-		resizeHandler: function resizeHandler() {
-			this.setPosition();
-			this.setDimensions();
+			_helpers2.default.setStyle(element, {
+				position: 'fixed',
+				top: _helpers2.default.toPixels((windowHeight - height) / 2),
+				left: _helpers2.default.toPixels((windowWidth - width) / 2)
+			});
 		}
 	};
 
 	exports.default = SoundBites;
+
+	// setPosition: function() {
+	// 		let element = this.element,
+	// 			cell = this.containerCell,
+	// 			cellRect = cell.getBoundingClientRect()
+
+	// 		let top = Helpers.toPixels(cellRect.top),
+	// 			left = Helpers.toPixels(cellRect.left)
+
+	// 		Helpers.setStyle(element, { top: top, left: left })
+	// 	},
+
+	// 	setDimensions: function() {
+	// 		let element = this.element,
+	// 			cell = this.containerCell,
+	// 			cellRect = cell.getBoundingClientRect(),
+	// 			width = Helpers.toPixels(cellRect.width),
+	// 			height = Helpers.toPixels(cellRect.height)
+
+	// 		Helpers.setStyle(element, { width: width, height: height })
+	// 	},
+
+	// 	resizeHandler: function() {
+	// 		this.setPosition()
+	// 		this.setDimensions()
+	// 	}
 
 /***/ },
 /* 9 */

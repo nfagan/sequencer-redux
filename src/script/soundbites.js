@@ -87,6 +87,8 @@ function SoundBite(template) {
 	if (template.container != null) {
 		template.container.appendChild(this.element)
 	}
+
+	if (template.makeCenter) { this.center() }
 }
 
 SoundBite.prototype = {
@@ -119,12 +121,19 @@ SoundBite.prototype = {
 	setUndocked: function(event) {
 		let element = this.element,
 			dockedClass = this.classNames.dockedInGrid,
-			undockedClass = this.classNames.undockedInGrid
+			undockedClass = this.classNames.undockedInGrid,
+			elementRect = element.getBoundingClientRect()
 
 		element.classList.remove(dockedClass)
 		element.classList.add(undockedClass)
 
-		element.style.backgroundColor = this.template.color
+		Helpers.setStyle(element,
+		{	
+			backgroundColor: this.template.color,
+			position: 'fixed',
+			top: Helpers.toPixels(event.clientY - 50/2),
+			left: Helpers.toPixels(event.clientX - 50/2)
+		})
 
 		element.setAttribute('data-x', 0)
 		element.setAttribute('data-y', 0)
@@ -133,31 +142,47 @@ SoundBite.prototype = {
 		this.gridId = null
 	},
 
-	setPosition: function() {
+	center: function() {
 		let element = this.element,
-			cell = this.containerCell,
-			cellRect = cell.getBoundingClientRect()
+			windowWidth = window.innerWidth,
+			windowHeight = window.innerHeight,
+			width = element.getBoundingClientRect().width,
+			height = element.getBoundingClientRect().height
 
-		let top = Helpers.toPixels(cellRect.top),
-			left = Helpers.toPixels(cellRect.left)
-
-		Helpers.setStyle(element, { top: top, left: left })
-	},
-
-	setDimensions: function() {
-		let element = this.element,
-			cell = this.containerCell,
-			cellRect = cell.getBoundingClientRect(),
-			width = Helpers.toPixels(cellRect.width),
-			height = Helpers.toPixels(cellRect.height)
-
-		Helpers.setStyle(element, { width: width, height: height })
-	},
-
-	resizeHandler: function() {
-		this.setPosition()
-		this.setDimensions()
+		Helpers.setStyle(element,
+		{
+			position: 'fixed',
+			top: Helpers.toPixels((windowHeight - height)/2),
+			left: Helpers.toPixels((windowWidth - width)/2),
+		})
 	}
 }
 
 export default SoundBites
+
+
+// setPosition: function() {
+// 		let element = this.element,
+// 			cell = this.containerCell,
+// 			cellRect = cell.getBoundingClientRect()
+
+// 		let top = Helpers.toPixels(cellRect.top),
+// 			left = Helpers.toPixels(cellRect.left)
+
+// 		Helpers.setStyle(element, { top: top, left: left })
+// 	},
+
+// 	setDimensions: function() {
+// 		let element = this.element,
+// 			cell = this.containerCell,
+// 			cellRect = cell.getBoundingClientRect(),
+// 			width = Helpers.toPixels(cellRect.width),
+// 			height = Helpers.toPixels(cellRect.height)
+
+// 		Helpers.setStyle(element, { width: width, height: height })
+// 	},
+
+// 	resizeHandler: function() {
+// 		this.setPosition()
+// 		this.setDimensions()
+// 	}

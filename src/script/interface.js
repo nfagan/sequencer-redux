@@ -177,6 +177,7 @@ Interface.prototype = {
 				template.type = 'inGrid'
 				template.container = container
 				template.audioParams = ctx.audioManager.getDefaultAudioParams()
+				template.makeCenter = true	//	center the element
 
 				//	show the grid
 

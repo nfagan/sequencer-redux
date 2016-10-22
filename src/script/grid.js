@@ -53,11 +53,11 @@ Grid.prototype = {
 
 		if (dockedCell === -1) return;
 
-		// dockedCell.element.removeChild(soundbite.element)
-		// soundbite.template.container.appendChild(soundbite.element)
+		dockedCell.element.removeChild(soundbite.element)
+		soundbite.template.container.appendChild(soundbite.element)
 		dockedCell.isEmpty = true
 
-		soundbite.setUndocked()
+		soundbite.setUndocked(event)
 	},
 
 	isInsideGridBounds(element) {

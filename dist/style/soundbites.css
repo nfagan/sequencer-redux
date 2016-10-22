@@ -1,9 +1,15 @@
 .soundbite {
   height: 50px;
-  width: 50px; }
+  width: 50px;
+  border-radius: 50%; }
 
 .soundbite__grid__docked {
+  border-radius: 0%;
   height: 100%;
   width: 100%; }
+
+.soundbite__grid__undocked {
+  height: 50px;
+  width: 50px; }
 
 /*# sourceMappingURL=soundbites.css.map */
