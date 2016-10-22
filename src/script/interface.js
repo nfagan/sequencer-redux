@@ -43,7 +43,7 @@ function Interface() {
 
 	//	show the grid only
 
-	this.changeState('GRID')
+	this.changeState('SELECT_SOUNDS')
 
 	//	configure events
 
@@ -68,6 +68,8 @@ Interface.prototype = {
 		this.handleSoundSelectorCloseButton()
 		this.handleSoundSelectorSoundBites()
 		this.handleGridSoundBites()
+		this.handleSequencerPlayButton()
+		this.handleSequencerDirectionButton()
 	},
 
 	changeState: function(state, target) {
@@ -104,6 +106,26 @@ Interface.prototype = {
 		}
 
 		console.log('current state is', this.state)
+	},
+
+	//	sequencer controls
+
+	handleSequencerPlayButton: function() {
+		let playButton = this.grid.controls.play,
+			sequencer = this.sequencer
+
+		playButton.addEventListener('click', function() {
+			sequencer.togglePlaying()
+		})
+	},
+
+	handleSequencerDirectionButton: function() {
+		let directionButton = this.grid.controls.direction,
+			sequencer = this.sequencer
+
+		directionButton.addEventListener('click', function() {
+			sequencer.toggleDirection()
+		})
 	},
 
 	//	effect control handlers

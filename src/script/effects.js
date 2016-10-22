@@ -7,13 +7,17 @@ function Effects(container) {
 	this.container = container
 	this.view = null
 	this.controls = {}
-	this.effects = {
-		gain: {},
-		filter: {},
-		pitch: {},
-		attack: {},
-		region: {}
-	}
+	this.effects = {}
+
+	this.effectTemplates = [
+		{ name: 'gain', innerText: '&#128266;' },
+		{ name: 'filter', innerText: '&#128584;' },
+		{ name: 'pitch', innerText: '&#128585;' },
+		{ name: 'attack', innerText: '&#128586;' },
+		{ name: 'region', innerText: '&#127881;' },
+		{ name: 'reverse', innerText: '&#127803;' }
+	]
+
 	this.soundBite = null
 
 	this.create()
@@ -34,15 +38,15 @@ Effects.prototype = {
 				stickyHeader: true,
 				className: 'effects__header',
 				cellClassName: 'effects__cell__header',
-				innerText: ['close', 'play'],
+				innerText: ['&#10003;', 'play'],
 				ids: ['effects__close', 'effects__playSound'],
 				rows: 1,
-				cols: 2,
+				cols: 1,
 			},
 			{
 				className: 'effects__effects',
 				cellClassName: 'effects__cell',
-				cellClassPattern: ['', 'effects__cell__effect'],
+				cellClassPattern: ['effects__cell__name', 'effects__cell__effect'],
 				rowClassName: 'effects__row',
 				rows: 0,
 				cols: 2,
@@ -67,29 +71,28 @@ Effects.prototype = {
 		this.createEffects()
 	},
 
-	createEffect: function(id) {
+	createEffect: function(template) {
 		let view = this.view,
 			section = view.getSectionByClassName('effects__effects')[0],
 			canvas = document.createElement('canvas')
 
 		canvas.className = 'effects__canvas'
 
-		section.ids = ['', id]
-		section.innerText = [id, '']
+		section.ids = ['', template.name]
+		section.innerText = [template.innerText, '']
 
 		view.createRow(section)
-		view.getCellById(id).appendChild(canvas)
+		view.getCellById(template.name).appendChild(canvas)
 
-		this.effects[id].canvas = canvas
+		this.effects[template.name] = { canvas: canvas }
 	},
 
 	createEffects: function() {
-		let effects = this.effects,
-			ctx = this
+		let templates = this.effectTemplates
 
-		Object.keys(effects).map(function(key) {
-			ctx.createEffect(key)
-		})
+		for (let i=0; i<templates.length; i++) {
+			this.createEffect(templates[i])
+		}
 	},
 
 	//	get the percentage of the canvas width that the user

@@ -46,6 +46,22 @@ Sequencer.prototype = {
 			}
 
 		},this.speed)
+	},
+
+	pause: function() {
+		clearInterval(this.loopId)
+		this.isPlaying = false
+	},
+
+	togglePlaying: function() {
+		this.isPlaying ? this.pause() : this.loop()
+	},
+
+	toggleDirection: function() {
+		this.direction = this.direction === 'columns' ? 'rows' : 'columns'
+		
+		this.pause()
+		this.loop()
 	}
 
 }

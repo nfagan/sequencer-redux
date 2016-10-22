@@ -1,6 +1,8 @@
 import AudioManager from './audiomanager.js'
 import Helpers from './helpers.js'
 
+const tween = require('../../node_modules/gsap/src/minified/TweenMax.min.js')
+
 //	SoundBites is an array of soundbites
 
 function SoundBites(audioParams, templates) {
@@ -88,7 +90,10 @@ function SoundBite(template) {
 		template.container.appendChild(this.element)
 	}
 
-	if (template.makeCenter) { this.center() }
+	if (template.makeCenter) {
+		let position = this.center() 
+		this.animateElementPopIn(position)
+	}
 }
 
 SoundBite.prototype = {
@@ -147,15 +152,42 @@ SoundBite.prototype = {
 			windowWidth = window.innerWidth,
 			windowHeight = window.innerHeight,
 			width = element.getBoundingClientRect().width,
-			height = element.getBoundingClientRect().height
+			height = element.getBoundingClientRect().height,
+			top = Helpers.toPixels((windowHeight - height) / 2),
+			left = Helpers.toPixels((windowWidth - width)/2)
 
 		Helpers.setStyle(element,
 		{
 			position: 'fixed',
-			top: Helpers.toPixels((windowHeight - height)/2),
-			left: Helpers.toPixels((windowWidth - width)/2),
+			top: top,
+			left: left
 		})
-	}
+
+		return { top: top, left: left }
+	},
+
+	animateElementPopIn: function(position) {
+		let circle = document.createElement('div')
+			Helpers.setStyle(circle,
+			{
+				position: 'fixed',
+				top: position.top, 
+				left: position.left,
+				borderRadius: '50%',
+				borderWidth: 'thick',
+				borderColor: 'black',
+				opacity: '1',
+				backgroundColor: 'gray',
+				height: '50px',
+				width: '50px'
+			})
+
+		document.body.appendChild(circle)
+
+		let tl = new TimelineMax()
+		tl.to(circle, .4, { css: { 'transform': 'scale(2,2)', 'opacity': '0' } })
+		setTimeout( () => document.body.removeChild(circle),400)
+	},
 }
 
 export default SoundBites

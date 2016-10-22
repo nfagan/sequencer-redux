@@ -1,3 +1,7 @@
+@mixin flexVerticalCenter {
+	display: flex; justify-content: center; align-items: center;	
+}
+
 .effects__container {
 	position: fixed;
 	width: 100vw;
@@ -19,12 +23,16 @@
 	height: 100%;
 }
 
+.effects__cell__name {
+	@include flexVerticalCenter;
+}
+
 .effects__cell__effect {
 	flex-basis: 200px;
 }
 
 .effects__cell__header {
-	display: flex; justify-content: center; align-items: center;
+	@include flexVerticalCenter;
 }
 
 .effects__canvas {

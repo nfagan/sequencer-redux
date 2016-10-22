@@ -15,6 +15,11 @@
 .effects__cell {
   height: 100%; }
 
+.effects__cell__name {
+  display: flex;
+  justify-content: center;
+  align-items: center; }
+
 .effects__cell__effect {
   flex-basis: 200px; }
 

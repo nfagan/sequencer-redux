@@ -14,37 +14,37 @@ AudioManager.prototype = {
 		return {
 			gain: {
 				enabled: true,
-				value: .5,
-				min: .5,
-				max: 2,
+				value: .25,
+				min: 0,
+				max: 4,
 			},
 			filter: {
 				enabled: true, 
 				value: 1,
-				maxFrequency: 3000,
-				minFrequency: 500
+				max: 3000,
+				min: 500
 			},
 			reverse: {
-				enabled: false
+				enabled: false,
+				value: 0,
+				min: 0,
+				max: 1
 			},
 			attack: {
 				enabled: true,
 				value: 0
 			},
-			envelope: {
-				enabled: false, 
-				attack: 0,
-				release: 1
-			},
 			region: {
 				enabled: true,
-				value: 0
+				value: 0,
+				min: 0,
+				max: .4
 			},
 			pitch: {
 				enabled: true,
 				value: .5,
-				min: -8,
-				max: 8,
+				min: -12,
+				max: 12,
 			}
 		}
 	},
@@ -157,8 +157,10 @@ AudioManager.prototype = {
 		//	handle reverse playback
 
 		if (params.reverse.enabled) {
-			Array.prototype.reverse.call(buffer.getChannelData(0))
-			Array.prototype.reverse.call(buffer.getChannelData(1))
+			if (Math.round(this.getFullValue(params.reverse)) > .5) {
+				Array.prototype.reverse.call(buffer.getChannelData(0))
+				Array.prototype.reverse.call(buffer.getChannelData(1))
+			}
 		}
 
 		//	handle gain
@@ -183,16 +185,16 @@ AudioManager.prototype = {
 			gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
 		}
 
-		if (params.envelope.enabled) {
-			let now = context.currentTime,
-				attack = now + params.envelope.attack*duration,
-				release = attack + params.envelope.release*duration
+		// if (params.envelope.enabled) {
+		// 	let now = context.currentTime,
+		// 		attack = now + params.envelope.attack*duration,
+		// 		release = attack + params.envelope.release*duration
 
-			gain.gain.cancelScheduledValues(0)
-			gain.gain.setValueAtTime(0, now)
-			gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
-			gain.gain.linearRampToValueAtTime(0, release)
-		}
+		// 	gain.gain.cancelScheduledValues(0)
+		// 	gain.gain.setValueAtTime(0, now)
+		// 	gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
+		// 	gain.gain.linearRampToValueAtTime(0, release)
+		// }
 
 		//	handle filtering
 
@@ -204,14 +206,14 @@ AudioManager.prototype = {
 				throw new Error('If a filter is enabled, you must specify a frequency')
 			}
 
-			let maxFreq = params.filter.maxFrequency,
-				minFreq = params.filter.minFrequency,
+			let maxFreq = params.filter.max,
+				minFreq = params.filter.min,
 				freq = params.filter.value
 
 			if (freq > 1) freq = 1;
 			if (freq < 0) freq = 0;
 
-			let absoluteFrequency = this.transformToFullValue(minFreq, maxFreq, freq)
+			let absoluteFrequency = Math.round(this.transformToFullValue(minFreq, maxFreq, freq))
 
 			filter.frequency.value = absoluteFrequency
 		}
@@ -221,7 +223,8 @@ AudioManager.prototype = {
 		let startOffset = 0
 
 		if (params.region.enabled) {
-			startOffset = params.region.value * duration
+			startOffset = 
+				this.getFullValue(params.region)
 		}
 
 		//	handle pitch shifting
@@ -229,7 +232,7 @@ AudioManager.prototype = {
 		let semitone = 0
 
 		if (params.pitch.enabled) {
-			semitone = this.transformToFullValue(params.pitch.min, params.pitch.max, params.pitch.value)
+			semitone = Math.round(this.getFullValue(params.pitch))
 		}
 
 		source.playbackRate.value = Math.pow(2, semitone/12)
@@ -245,7 +248,11 @@ AudioManager.prototype = {
 	},
 
 	transformToFullValue: function(min, max, percentage) {
-		return Math.round(((max - min) * percentage) + min)
+		return ((max - min) * percentage) + min
+	},
+
+	getFullValue: function(obj) {
+		return this.transformToFullValue(obj.min, obj.max, obj.value)
 	},
 
 	playDummySound: function() {

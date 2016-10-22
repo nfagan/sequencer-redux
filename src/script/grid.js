@@ -120,7 +120,7 @@ Grid.prototype = {
 		//	define the control text and ids
 
 		let controlIds = ['play', 'direction', 'effects', 'newSound'],
-			controlText = ['play', 'direc', 'fx', '+']
+			controlText = ['&#128075;', 'direc', 'fx', '+']
 
 		//	create the basic grid from the ViewTemplate
 
