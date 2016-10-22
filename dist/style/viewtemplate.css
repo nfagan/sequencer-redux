@@ -13,6 +13,7 @@
   flex-shrink: 0; }
 
 .content {
+  height: 100%;
   order: 2;
   overflow-y: scroll; }
 
@@ -24,8 +25,9 @@
   min-width: 50px;
   flex-grow: 1;
   height: 50px;
-  box-sizing: border-box;
-  background-color: blue;
-  border: solid 2px; }
+  box-sizing: border-box; }
+
+.hidden {
+  display: none; }
 
 /*# sourceMappingURL=viewtemplate.css.map */

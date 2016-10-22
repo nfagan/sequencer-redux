@@ -1,10 +1,14 @@
-function SoundBite(container) {
+import AudioManager from './audiomanager.js'
+
+function SoundBite(container, filename) {
 	this.element = document.createElement('div')
 	this.undockedClassName = 'soundbite'
 	this.dockedClassName = 'cell__sound'
 	this.element.className = this.undockedClassName
 	this.gridId = null
 	this.isDocked = false
+	this.audioParams = AudioManager.getDefaultAudioParams()
+	this.filename = filename
 
 	container.appendChild(this.element)
 }

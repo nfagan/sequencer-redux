@@ -1,84 +1,168 @@
 import Helpers from './helpers.js'
+import ViewTemplate from './viewtemplate.js'
+const interact = require('interact.js')
 
 function Effects(container) {
 
-	//	create the effects module with className 'effects'
-
-	let effectsElement = Helpers.createDiv({ className: 'effects' })
-	container.appendChild(effectsElement)
-
-	//	define the effects that allow manipulation
-
-	let effects = [
-		{ name: 'volume', interactCanvas: null },
-		{ name: 'attack', interactCanvas: null },
-		{ name: 'release', interactCanvas: null },
-		{ name: 'pitch', interactCanvas: null },
-	]
-
 	this.container = container
-	this.effectsElement = effectsElement
-	this.effects = effects
-
-	for (let i=0; i<effects.length; i++) {
-		this.createEffect(effects[i])
+	this.view = null
+	this.controls = {}
+	this.effects = {
+		gain: {},
+		filter: {},
+		pitch: {},
+		attack: {},
+		region: {}
 	}
+	this.soundBite = null
 
-	document.body.appendChild(container)
+	this.create()
+	this.slider()
 }
 
 Effects.prototype = {
 
 	constructor: Effects,
 
-	createEffect: function(template) {
-		let effectsElement = this.effectsElement,
-			row = Helpers.createDiv({ className: 'effects__row' }),
-			interactCanvas = Helpers.createDiv({ className: 'effects__item effects__item__effect', id: template.name })
+	create: function() {
 
-		row.appendChild(Helpers.createDiv({ className: 'effects__item' }))
-		row.appendChild(interactCanvas)
-		row.appendChild(Helpers.createDiv({ className: 'effects__item effects__item__switch' }))
+		//	create the basic grid from the ViewTemplate
 
-		effectsElement.appendChild(row)
+		let view = new ViewTemplate(
+			this.container,
+			[{
+				stickyHeader: true,
+				className: 'effects__header',
+				cellClassName: 'effects__cell__header',
+				innerText: ['close', 'play'],
+				ids: ['effects__close', 'effects__playSound'],
+				rows: 1,
+				cols: 2,
+			},
+			{
+				className: 'effects__effects',
+				cellClassName: 'effects__cell',
+				cellClassPattern: ['', 'effects__cell__effect'],
+				rowClassName: 'effects__row',
+				rows: 0,
+				cols: 2,
+				ids: []
+			}],
+			{ name: 'effects' })
 
-		template.interactCanvas = interactCanvas
+		view.addToDocument()
+		view.keepCentered()
+		view.hide()
 
-		this.createInteractCanvas(template)
+		//	keep a reference to the control elements
+
+		this.controls.close = view.getCellById('effects__close')
+
+		//	add the view module
+
+		this.view = view
+
+		//	create the effects
+
+		this.createEffects()
 	},
 
-	createInteractCanvas: function(template) {
+	createEffect: function(id) {
+		let view = this.view,
+			section = view.getSectionByClassName('effects__effects')[0],
+			canvas = document.createElement('canvas')
 
-		function canvasCreator(id) {
-			let canvas = document.createElement('canvas'),
-				container = template.interactCanvas
+		canvas.className = 'effects__canvas'
 
-			container.appendChild(canvas)
+		section.ids = ['', id]
+		section.innerText = [id, '']
 
-			canvas.style.height = '100%'
-			canvas.style.width = '100%'
+		view.createRow(section)
+		view.getCellById(id).appendChild(canvas)
 
-			return canvas
-		}
-
-		function drawRectangle(width) {
-			ctx.clearRect(0, 0, canvas.width, canvas.height)
-			ctx.fillRect(0, 0, width, canvas.height)
-		}
-
-		function getRectangleDimensions(canvas, event) {
-			return getXPercent(canvas, event) * canvas.width
-		}
-
-		let canvas = canvasCreator(template.id),
-			ctx = canvas.getContext('2d')
-
-		drawRectangle(40)
+		this.effects[id].canvas = canvas
 	},
 
-	show: function() { this.container.style.zIndex = '2' },
+	createEffects: function() {
+		let effects = this.effects,
+			ctx = this
 
-	hide: function() { this.container.style.zIndex = '1' }
+		Object.keys(effects).map(function(key) {
+			ctx.createEffect(key)
+		})
+	},
+
+	//	get the percentage of the canvas width that the user
+	//	clicked / dragged
+
+	getXPercent: function(event) {
+		let canvas = event.target,
+			canvasLeft = canvas.getBoundingClientRect().left,
+			canvasRight = canvas.getBoundingClientRect().right,
+			clientX = event.clientX,
+			percentage = (clientX - canvasLeft)/(canvasRight - canvasLeft)
+
+		return percentage
+	},
+
+	drawRectangle: function(canvas, percent) {
+		let ctx = canvas.getContext('2d'),
+			width = canvas.width * percent
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height)
+		ctx.fillRect(0, 0, width, canvas.height)
+	},
+
+	//	set up canvas drag event listeners
+
+	slider: function() {
+		let ctx = this
+
+		function assignValues(event) {
+			let type = event.target.parentNode.id,
+				percent = ctx.getXPercent(event),
+				soundBite = ctx.soundBite
+
+			soundBite.audioParams[type].value = percent
+		}
+
+		function draw(event) {
+			ctx.drawRectangle(event.target, ctx.getXPercent(event))
+		}
+
+		interact('.effects__canvas')
+			.draggable({
+				restrict: {
+					restriction: 'self'
+		    	},
+		    	max: Infinity
+		  	})
+		  	.on('dragmove', function(event) {
+		  		assignValues(event)
+				draw(event)
+		  	})
+		  	.on('click', function(event) {
+				assignValues(event)
+				draw(event)
+		  	})
+	},
+
+	show: function(soundBite) {
+		this.view.show()
+		this.soundBite = soundBite
+		this.slider()
+
+		let effectNames = Object.keys(this.effects)
+
+		for (let i=0; i<effectNames.length; i++) {
+			let currentValue = soundBite.audioParams[effectNames[i]].value,
+				currentCanvas = this.effects[effectNames[i]].canvas
+
+			this.drawRectangle(currentCanvas, currentValue)
+		}
+	},
+
+	hide: function() { this.view.hide() }
 
 }
 

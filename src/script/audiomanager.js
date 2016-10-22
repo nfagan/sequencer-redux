@@ -13,29 +13,37 @@ AudioManager.prototype = {
 		return {
 			gain: {
 				enabled: true,
-				value: 1
+				value: .5,
+				min: .5,
+				max: 2,
 			},
 			filter: {
-				enabled: false, 
-				frequency: 1,
+				enabled: true, 
+				value: 1,
 				maxFrequency: 3000,
 				minFrequency: 500
 			},
 			reverse: {
 				enabled: false
 			},
+			attack: {
+				enabled: true,
+				value: 0
+			},
 			envelope: {
-				enabled: true, 
+				enabled: false, 
 				attack: 0,
 				release: 1
 			},
 			region: {
 				enabled: true,
-				start: 0
+				value: 0
 			},
 			pitch: {
 				enabled: true,
-				semitone: 0
+				value: .5,
+				min: -8,
+				max: 8,
 			}
 		}
 	},
@@ -89,6 +97,7 @@ AudioManager.prototype = {
 	//	push an array of buffers to the object
 
 	loadSounds: function(filenames) {
+
 		let promises = [],
 			buffers = this.buffers
 
@@ -144,8 +153,6 @@ AudioManager.prototype = {
 			params = Object.assign({}, params, newObj)
 		}
 
-		console.log(params)
-
 		//	handle reverse playback
 
 		if (params.reverse.enabled) {
@@ -155,13 +162,25 @@ AudioManager.prototype = {
 
 		//	handle gain
 
-		let gainAdjustment = params.gain.value
+		let gainAdjustment = 1
 
-		if (!params.gain.enabled) gainAdjustment = 1;
+		if (params.gain.enabled) {
+			gainAdjustment = 
+				this.transformToFullValue(params.gain.min, params.gain.max, params.gain.value)
+		}
 
 		gain.gain.value = gainAdjustment
 
 		//	handle attack / release
+
+		if (params.attack.enabled) {
+			let now = context.currentTime,
+				attack = now + params.attack.value*duration
+
+			gain.gain.cancelScheduledValues(0)
+			gain.gain.setValueAtTime(0, now)
+			gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
+		}
 
 		if (params.envelope.enabled) {
 			let now = context.currentTime,
@@ -180,18 +199,18 @@ AudioManager.prototype = {
 		filter.frequency.value = 20000
 
 		if (params.filter.enabled) {
-			if (params.filter.frequency == null) {
+			if (params.filter.value == null) {
 				throw new Error('If a filter is enabled, you must specify a frequency')
 			}
 
 			let maxFreq = params.filter.maxFrequency,
 				minFreq = params.filter.minFrequency,
-				freq = params.filter.frequency
+				freq = params.filter.value
 
 			if (freq > 1) freq = 1;
 			if (freq < 0) freq = 0;
 
-			let absoluteFrequency = Math.round(((maxFreq - minFreq) * freq) + minFreq)
+			let absoluteFrequency = this.transformToFullValue(minFreq, maxFreq, freq)
 
 			filter.frequency.value = absoluteFrequency
 		}
@@ -201,7 +220,7 @@ AudioManager.prototype = {
 		let startOffset = 0
 
 		if (params.region.enabled) {
-			startOffset = params.region.start * duration
+			startOffset = params.region.value * duration
 		}
 
 		//	handle pitch shifting
@@ -209,7 +228,7 @@ AudioManager.prototype = {
 		let semitone = 0
 
 		if (params.pitch.enabled) {
-			semitone = params.pitch.semitone
+			semitone = this.transformToFullValue(params.pitch.min, params.pitch.max, params.pitch.value)
 		}
 
 		source.playbackRate.value = Math.pow(2, semitone/12)
@@ -222,44 +241,50 @@ AudioManager.prototype = {
 		gain.connect(context.destination)
 
 		source.start(0, startOffset)
+	},
+
+	transformToFullValue: function(min, max, percentage) {
+		return Math.round(((max - min) * percentage) + min)
 	}
 
 }
 
-//	testing it all out
+export default AudioManager
 
-let filenames = [
-	'celeste_piano_c.mp3',
-	'celeste_piano_g_e.mp3',
-	'celeste_piano_c_e.mp3'
-]
+// //	testing it all out
 
-const manager = new AudioManager(filenames)
+// let filenames = [
+// 	'celeste_piano_c.mp3',
+// 	'celeste_piano_g_e.mp3',
+// 	'celeste_piano_c_e.mp3'
+// ]
 
-const test__params = [
-	{
-		filter: { enabled: true, frequency: .2 },
-		gain: { enabled: false, value: 1 },
-		envelope: { enabled: true, attack: .2, release: 1 } 
-	},
-	{
-		filter: { enabled: true, frequency: 1 },
-		gain: { enabled: false, value: .5 },
-		pitch: { enabled: true, semitone: 0 }
-	},
-	{ 
-		filter: { enabled: true, frequency: 1 },
-		gain: { enabled: false, value: 1 },
-		reverse: { enabled: true },
-		region: { enabled: true, start: .8 },
-		pitch: { enabled: true, semitone: -12 },
-		envelope: { enabled: true, attack: 0 }
-	}
-]
+// const manager = new AudioManager(filenames)
 
-manager.loadSounds(manager.filenames)
-	.then(function() {
-		for (let i=0; i<test__params.length; i++) {
-			manager.processAndPlay({ filename: filenames[i], audioParams: test__params[i] })
-		}
-	})
+// const test__params = [
+// 	{
+// 		filter: { enabled: true, frequency: .2 },
+// 		gain: { enabled: false, value: 1 },
+// 		envelope: { enabled: true, attack: .2, release: 1 } 
+// 	},
+// 	{
+// 		filter: { enabled: true, frequency: 1 },
+// 		gain: { enabled: false, value: .5 },
+// 		pitch: { enabled: true, semitone: 0 }
+// 	},
+// 	{ 
+// 		filter: { enabled: true, frequency: 1 },
+// 		gain: { enabled: false, value: 1 },
+// 		reverse: { enabled: true },
+// 		region: { enabled: true, start: .8 },
+// 		pitch: { enabled: true, semitone: -12 },
+// 		envelope: { enabled: true, attack: 0 }
+// 	}
+// ]
+
+// manager.loadSounds(manager.filenames)
+// 	.then(function() {
+// 		for (let i=0; i<test__params.length; i++) {
+// 			manager.processAndPlay({ filename: filenames[i], audioParams: test__params[i] })
+// 		}
+// 	})

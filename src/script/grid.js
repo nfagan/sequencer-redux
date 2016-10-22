@@ -1,5 +1,6 @@
 import Helpers from './helpers.js'
 import SoundSelector from './soundselector.js'
+import ViewTemplate from './viewtemplate.js'
 
 function Grid(container) {
 
@@ -8,10 +9,11 @@ function Grid(container) {
 	}
 
 	this.container = container
-	this.grid = null
 	this.cells = []
 	this.controls = null
 	this.soundSelector = null
+
+	this.view = this.create()
 }
 
 Grid.prototype = {
@@ -20,6 +22,12 @@ Grid.prototype = {
 
 	dock: function(soundbite) {
 
+		//	if we didn't initiate a touch with the mouse on the element
+		//	don't dock
+
+		if (!soundbite.beganWithMouseDown) return;
+		soundbite.beganWithMouseDown = false
+
 		//	only dock the element if we're within the grid
 
 		if (!this.isInsideGridBounds(soundbite.element)) return;
@@ -27,12 +35,11 @@ Grid.prototype = {
 		//	find the closest nearby cell
 
 		let closestCell = this.nearestEmptyCell(soundbite.element),
-			gridId = closestCell.id,
 			cellElement = closestCell.element
 
 		//	update the soundbite's properties to reflect the docking
 
-		soundbite.setDocked(gridId)
+		soundbite.setDocked(closestCell.id)
 
 		//	add it to the parent, and mark that the parent encloses an element
 
@@ -40,8 +47,17 @@ Grid.prototype = {
 		closestCell.isEmpty = false
 	},
 
-	undock: function(element) {
+	undock: function(soundbite, event) {
 
+		let dockedCell = this.getCellById(soundbite.gridId)
+
+		if (dockedCell === -1) return;
+
+		// dockedCell.element.removeChild(soundbite.element)
+		// soundbite.template.container.appendChild(soundbite.element)
+		dockedCell.isEmpty = true
+
+		soundbite.setUndocked()
 	},
 
 	isInsideGridBounds(element) {
@@ -73,6 +89,12 @@ Grid.prototype = {
 		return this.cells.filter(function(cell) { return cell.isEmpty === true })
 	},
 
+	getCellById: function(id) {
+		let cell = this.cells.filter(function(cell) { return cell.id === id })
+		if (cell.length === 0) return -1;
+		return cell[0]
+	},
+
 	nearestEmptyCell: function(element) {
 		let cells = this.getEmptyCells(),
 			position = element.getBoundingClientRect()
@@ -91,111 +113,88 @@ Grid.prototype = {
 		return cells.filter(function(cell) { return cell.id === min.id })[0]
 	},
 
-	//	draw the grid
+	//	draw + create the grid
 
 	create: function() {
-		let container = this.container,
-			grid = document.createElement('div')
 
-		grid.className = 'grid'
+		//	define the control text and ids
 
-		this.grid = grid
-		this.createControls(grid)
-		this.createInitialCells(grid)
-		this.createSoundSelectorDropdown()
+		let controlIds = ['play', 'direction', 'effects', 'newSound'],
+			controlText = ['play', 'direc', 'fx', '+']
 
-		container.appendChild(grid)
-		document.body.appendChild(container)
-	},
+		//	create the basic grid from the ViewTemplate
 
-	//	create the soundbite container
+		let view = new ViewTemplate(
+			this.container,
+			[{
+				stickyHeader: true,
+				className: 'grid__controls',
+				cellClassName: 'grid__cell__controls',
+				rows: 1,
+				cols: 4,
+				innerText: controlText,
+				ids: controlIds
+			},
+			{
+				className: 'grid__sounds',
+				rows: this.dimensions.rows,
+				cols: this.dimensions.cols,
+				ids: 'auto'
+			}])
 
-	createSoundSelectorDropdown: function() {
-		let selectorContainer = this.controls.newSound
-		this.soundSelector = new SoundSelector(selectorContainer)
-	},
-
-	//	create the top row of the grid: the sticky-header controls
-
-	createControls: function(gridElement) {
-		let controls = Helpers.createDiv({ className: 'controls' }),
-			classNames = ['cell', 'cell__controls'],
-			innerText = ['play', 'direc', 'fx', '+'],
-			ids = innerText,
-			cells = Helpers.createRow(4, classNames, innerText, ids)
-
-		controls.appendChild(cells)
-		gridElement.appendChild(controls)
+		//	get the control elements separately
 
 		this.controls = {
-			play: cells.childNodes[0],
-			direction: cells.childNodes[1],
-			effects: cells.childNodes[2],
-			newSound: cells.childNodes[3]
+			play: view.getCellById('play'),
+			direction: view.getCellById('direction'),
+			effects: view.getCellById('effects'),
+			newSound: view.getCellById('newSound')
 		}
-	},
 
-	//	create the initial rows into which elements can be docked
+		//	get the grid section separately
 
-	createInitialCells: function(gridElement) {
-		let sounds = document.createElement('div'),
-			nRows = this.dimensions.rows,
-			nCols = this.dimensions.cols,
-			cells = []
+		this.grid = view.container
 
-		for (let i=0; i<nRows; i++) {
+		//	get the cells separately
 
-			//	create a row with classNames 'cell' and 'cell__soundContainer'
+		let cells = []
 
-			let row = Helpers.createRow(nCols, ['cell', 'cell__soundContainer'])
-
-			//	add ids such that each cell is marked 0,0 ... 1,1 ... etc.
-
-			Helpers.addIds(row, i)
-
-			//	add the row to the sounds div
-
-			sounds.appendChild(row)
-
-			//	add a reference to each child cell to the grid object
-
-			Array.prototype.map.call(row.childNodes, function(node) {
+		view.getCellsInSection('grid__sounds')
+			.map(function(cell) {
 				cells.push({
-					element: node,
-					id: node.id,
+					element: cell,
+					id: cell.id,
 					isEmpty: true
 				})
 			})
-		}
 
 		this.cells = cells
 
-		sounds.className = 'sounds'
-		gridElement.appendChild(sounds)
+		//	display the grid, and keep it centered in the viewport
+
+		this.style(view)
+
+		view.addToDocument()
+		view.keepCentered()
+		view.hide()
+
+		return view
 	},
 
-	//	center the grid in the viewport
-
-	center: function() {
-		let grid = this.grid,
-			gridRect = grid.getBoundingClientRect(),
-			position = Helpers.getElementCenterInViewport(gridRect.width, gridRect.height)
-
-		position.top = Helpers.toPixels(position.top),
-		position.left = Helpers.toPixels(position.left)
-
-		Helpers.setStyle(grid, position)
+	style: function(view) {
+		view.getAllCells()
+			.map(function(cell) {
+				Helpers.setStyle(cell, {
+					backgroundColor: Helpers.toRGB(20,200, Helpers.randInt(0,255))	
+				})
+			})
 	},
 
-	//	show controls
+	//	control display
 
-	showNewSoundsButton: function() {
-		this.soundSelector.show()
-	},
+	hide: function() { this.view.hide() },
 
-	hideNewSoundsButton: function() {
-		this.soundSelector.hide()
-	}
+	show: function() { this.view.show() }
 }
 
 export default Grid

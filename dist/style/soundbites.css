@@ -1,6 +1,9 @@
 .soundbite {
   height: 50px;
-  width: 50px;
-  background-color: blue; }
+  width: 50px; }
+
+.soundbite__grid__docked {
+  height: 100%;
+  width: 100%; }
 
 /*# sourceMappingURL=soundbites.css.map */

@@ -1,34 +1,73 @@
-function SoundSelector(container) {
-	let selector = document.createElement('div'),
-		className = 'soundSelector'
+import ViewTemplate from './viewtemplate.js'
 
-	selector.className = className
-	container.appendChild(selector)
+function SoundSelector(container, bites) {
 
-	this.visibility = null
-	this.element = selector
-	this.className = className
-	this.hide()
+	this.bites = bites
+	this.container = container
+	this.controls = {}
+	this.view = this.create()
+	this.addBites()
+
 }
 
 SoundSelector.prototype = {
 	constructor: SoundSelector,
 
-	appendChild: function(soundbite) {
-		this.element.appendChild(soundbite.element)
+	create: function() {
+
+		//	create the basic grid from the ViewTemplate
+
+		let nCols = 2,
+			nRows = Math.ceil(this.bites.original.length / nCols)
+
+		let view = new ViewTemplate(
+			this.container,
+			[{
+				stickyHeader: true,
+				className: 'soundSelector__header',
+				cellClassName: 'soundSelector__cell__header',
+				innerText: ['close', 'select'],
+				ids: ['soundSelector__close', 'soundSelector__select'],
+				rows: 1,
+				cols: 2,
+			},
+			{
+				className: 'soundSelector__sounds',
+				cellClassName: 'soundSelector__cell',
+				rowClassName: 'soundSelector__row',
+				rows: nRows,
+				cols: nCols,
+				ids: []
+			}],
+			{ name: 'soundSelector' })
+
+		view.addToDocument()
+		view.keepCentered()
+		view.hide()
+
+		this.controls.select = view.getCellById('soundSelector__select')
+		this.controls.close = view.getCellById('soundSelector__close')
+
+		return view
+
 	},
 
-	show: function() {
-		let className = this.className
-		this.element.className = className + ' ' + className + '--visible'
-		this.visibility = 'visible'
+	addBites: function() {
+		let view = this.view,
+			cells = view.getCellsInSection('soundSelector__sounds'),
+			bites = this.bites.original
+
+		for (let i=0; i<bites.length; i++) {
+			cells[i].appendChild(bites[i].element)
+		}
+
 	},
 
-	hide: function() {
-		let className = this.className
-		this.element.className = className + ' ' + className + '--hidden'
-		this.visibility = 'hidden'
-	}
+	//	control displaying
+
+	hide: function() { this.view.hide() },
+
+	show: function() { this.view.show() }
 
 }
 

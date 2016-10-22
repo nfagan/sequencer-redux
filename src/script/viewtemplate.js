@@ -1,6 +1,6 @@
 import Helpers from './helpers.js'
 
-function ViewTemplate(wrapper, sections) {
+function ViewTemplate(wrapper, sections, options) {
 
 	this.wrapper = wrapper
 	this.container = this.createDiv({ className: 'container' })
@@ -14,7 +14,12 @@ function ViewTemplate(wrapper, sections) {
 		rowClassName: 'row'
 	}
 
+	if (options != null) {
+		if (options.name != null) this.container.classList.add(options.name);
+	}
+
 	this.wrapper.appendChild(this.container)
+	this.create()
 }
 
 ViewTemplate.prototype = {
@@ -26,10 +31,6 @@ ViewTemplate.prototype = {
 		this.sections.map(function(section) {
 			ctx.createSection(section)
 		})
-	},
-
-	addToDocument: function() {
-		document.body.appendChild(this.wrapper)
 	},
 
 	createSection: function(section) {
@@ -53,8 +54,26 @@ ViewTemplate.prototype = {
 			nCells = section.cols,
 			cellClassName = this.defaults.cellClassName
 
+		if (section.rowClassName != null) {
+			row.classList.add(section.rowClassName)
+		}
+
 		for (let i=0; i<nCells; i++) {
-			let cell = this.createDiv({ className: cellClassName })
+			let appliedClassName = cellClassName
+
+			//	if specifying a class for all cells
+
+			if (section.cellClassName != null) {
+				appliedClassName = cellClassName + ' ' + section.cellClassName
+			}
+
+			//	if specifying a class for cell[0], cells[1], ... 
+
+			if (section.cellClassPattern != null) {
+				appliedClassName = appliedClassName + ' ' + section.cellClassPattern[i]
+			}
+
+			let cell = this.createDiv({ className: appliedClassName })
 
 			row.appendChild(cell)
 
@@ -91,6 +110,12 @@ ViewTemplate.prototype = {
 		return div
 	},
 
+	addToDocument: function() {
+		document.body.appendChild(this.wrapper)
+	},
+
+	//	keep the container centered
+
 	center: function() {
 		let container = this.container,
 			containerRect = container.getBoundingClientRect(),
@@ -100,6 +125,25 @@ ViewTemplate.prototype = {
 		position.left = Helpers.toPixels(position.left)
 
 		Helpers.setStyle(container, position)
+	},
+
+	keepCentered: function() {
+		this.center()
+		window.addEventListener('resize', this.center.bind(this))
+	},
+
+	//	get elements
+
+	getSectionByClassName: function(className) {
+		let sections = this.sections
+
+		return sections.filter(function(section) { return section.className === className })
+	},
+
+	getCellById: function(id) {
+		let cells = this.getAllCells()
+
+		return cells.filter(function(cell) { return cell.id === id })[0]
 	},
 
 	getAllCells: function() {
@@ -119,6 +163,15 @@ ViewTemplate.prototype = {
 			store.push(cell.element)
 			return store
 		},[])
+	},
+
+	hide: function() {
+		this.wrapper.classList.add('hidden')
+	},
+
+	show: function() {
+		this.wrapper.classList.remove('hidden')
+		this.center()
 	}
 
 }

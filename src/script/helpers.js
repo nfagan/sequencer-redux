@@ -2,6 +2,14 @@ const Helpers = (function() {
 
 	return {
 
+		randId: function(append) {
+			let id = Math.random().toString(36).substring(7)
+
+			if (append == null) return id;
+
+			return append + id
+		},
+
 		setStyle: function(el, properties) {
 			let keys = Object.keys(properties)
 			keys.map( (key) => { el.style[key] = properties[key] })
@@ -111,6 +119,19 @@ const Helpers = (function() {
 			}
 			
 			return element
+		},
+
+		dragMoveListener: function(e) {
+			let target = e.target,
+	        	x = (parseFloat(target.getAttribute('data-x')) || 0) + e.dx,
+	        	y = (parseFloat(target.getAttribute('data-y')) || 0) + e.dy
+
+	        target.style.webkitTransform =
+	    	target.style.transform =
+	      		'translate(' + x + 'px, ' + y + 'px)'
+
+			target.setAttribute('data-x', x)
+	    	target.setAttribute('data-y', y)
 		}
 	}
 

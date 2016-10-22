@@ -1,0 +1,29 @@
+@mixin flexVerticalCenter {
+	display: flex; justify-content: center; align-items: center;	
+}
+
+.soundSelector__container {
+	position: fixed;
+	width: 100vw;
+	height: 100vh;
+	overflow: scroll;
+}
+
+.soundSelector {
+	background-color: yellow;
+	max-width: 300px;
+}
+
+.soundSelector__row {
+	height: 100px;
+	min-height: 100px;	
+}
+
+.soundSelector__cell {
+	height: 100%;
+	@include flexVerticalCenter;
+}
+
+.soundSelector__cell__header {
+	@include flexVerticalCenter;
+}

@@ -1,3 +1,11 @@
+.soundbite {
+  height: 50px;
+  width: 50px; }
+
+.soundbite__grid__docked {
+  height: 100%;
+  width: 100%; }
+
 .container {
   position: absolute;
   display: flex;
@@ -13,6 +21,7 @@
   flex-shrink: 0; }
 
 .content {
+  height: 100%;
   order: 2;
   overflow-y: scroll; }
 
@@ -24,9 +33,75 @@
   min-width: 50px;
   flex-grow: 1;
   height: 50px;
-  box-sizing: border-box;
-  background-color: blue;
-  border: solid 2px; }
+  box-sizing: border-box; }
+
+.hidden {
+  display: none; }
+
+.effects__container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  overflow: scroll; }
+
+.effects {
+  background-color: yellow;
+  max-width: 300px; }
+
+.effects__row {
+  height: 100px;
+  min-height: 100px; }
+
+.effects__cell {
+  height: 100%; }
+
+.effects__cell__effect {
+  flex-basis: 200px; }
+
+.effects__cell__header {
+  display: flex;
+  justify-content: center;
+  align-items: center; }
+
+.effects__canvas {
+  height: 100%;
+  width: 100%; }
+
+.grid__container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  overflow: scroll; }
+
+.grid__cell__controls {
+  display: flex;
+  justify-content: center;
+  align-items: center; }
+
+.soundSelector__container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  overflow: scroll; }
+
+.soundSelector {
+  background-color: yellow;
+  max-width: 300px; }
+
+.soundSelector__row {
+  height: 100px;
+  min-height: 100px; }
+
+.soundSelector__cell {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center; }
+
+.soundSelector__cell__header {
+  display: flex;
+  justify-content: center;
+  align-items: center; }
 
 body {
   padding: 0;

@@ -1,43 +1,30 @@
 .effects__container {
   position: fixed;
-  top: 0;
-  left: 0;
-  padding: 0;
-  margin: 0;
-  height: 100vh;
   width: 100vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center; }
+  height: 100vh;
+  overflow: scroll; }
 
 .effects {
-  height: 95%;
-  width: 95%;
-  max-height: 300px;
-  max-width: 300px;
-  overflow: auto;
-  display: flex;
-  flex-direction: column; }
+  background-color: yellow;
+  max-width: 300px; }
 
 .effects__row {
   height: 100px;
-  min-height: 100px;
-  display: flex;
-  flex-direction: row; }
+  min-height: 100px; }
 
-.effects__item {
+.effects__cell {
+  height: 100%; }
+
+.effects__cell__effect {
+  flex-basis: 200px; }
+
+.effects__cell__header {
   display: flex;
-  height: 100%;
-  align-items: center;
   justify-content: center;
-  flex-basis: 50px;
-  flex-grow: 1;
-  background-color: red;
-  border: solid 5px black;
-  box-sizing: border-box; }
+  align-items: center; }
 
-.effects__item__effect {
-  flex-basis: 100px; }
+.effects__canvas {
+  height: 100%;
+  width: 100%; }
 
 /*# sourceMappingURL=effects.css.map */
