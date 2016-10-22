@@ -3,6 +3,7 @@ function AudioManager(filenames) {
 	this.params = this.getDefaultAudioParams()
 	this.buffers = []
 	this.filenames = filenames
+	this.playedDummySound = false	//	for proper iOS audio
 }
 
 AudioManager.prototype = {
@@ -245,46 +246,21 @@ AudioManager.prototype = {
 
 	transformToFullValue: function(min, max, percentage) {
 		return Math.round(((max - min) * percentage) + min)
-	}
+	},
+
+	playDummySound: function() {
+		if (this.playedDummySound) return;
+
+		let buffer = this.context.createBuffer(1,1,22050),
+			source = this.context.createBufferSource()
+
+		source.buffer = buffer
+		source.connect(this.context.destination)
+		source.start(0)
+
+		this.playedDummySound = true
+	},
 
 }
 
 export default AudioManager
-
-// //	testing it all out
-
-// let filenames = [
-// 	'celeste_piano_c.mp3',
-// 	'celeste_piano_g_e.mp3',
-// 	'celeste_piano_c_e.mp3'
-// ]
-
-// const manager = new AudioManager(filenames)
-
-// const test__params = [
-// 	{
-// 		filter: { enabled: true, frequency: .2 },
-// 		gain: { enabled: false, value: 1 },
-// 		envelope: { enabled: true, attack: .2, release: 1 } 
-// 	},
-// 	{
-// 		filter: { enabled: true, frequency: 1 },
-// 		gain: { enabled: false, value: .5 },
-// 		pitch: { enabled: true, semitone: 0 }
-// 	},
-// 	{ 
-// 		filter: { enabled: true, frequency: 1 },
-// 		gain: { enabled: false, value: 1 },
-// 		reverse: { enabled: true },
-// 		region: { enabled: true, start: .8 },
-// 		pitch: { enabled: true, semitone: -12 },
-// 		envelope: { enabled: true, attack: 0 }
-// 	}
-// ]
-
-// manager.loadSounds(manager.filenames)
-// 	.then(function() {
-// 		for (let i=0; i<test__params.length; i++) {
-// 			manager.processAndPlay({ filename: filenames[i], audioParams: test__params[i] })
-// 		}
-// 	})

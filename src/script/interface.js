@@ -152,6 +152,7 @@ Interface.prototype = {
 	handleSoundSelectorSoundBites: function() {
 		let ctx = this,
 			grid = this.grid,
+			audioManager = this.audioManager,
 			soundBites = this.soundBites,
 			oneBite = soundBites.original[0],
 			biteClass = '.' + oneBite.classNames.dockedInSoundSelector
@@ -160,6 +161,10 @@ Interface.prototype = {
 
 		interact(biteClass)
 			.on('doubletap', function(event) {
+
+				//	to make web audio work properly in iOS
+
+				audioManager.playDummySound()
 
 				//	identify which kind of soundbite to create
 

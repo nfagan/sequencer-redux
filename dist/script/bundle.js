@@ -46,7 +46,7 @@
 
 	'use strict';
 
-	var _interface = __webpack_require__(4);
+	var _interface = __webpack_require__(1);
 
 	var _interface2 = _interopRequireDefault(_interface);
 
@@ -55,8 +55,7 @@
 	var d = new _interface2.default();
 
 /***/ },
-/* 1 */,
-/* 2 */
+/* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -65,7 +64,636 @@
 		value: true
 	});
 
-	var _helpers = __webpack_require__(3);
+	var _helpers = __webpack_require__(2);
+
+	var _helpers2 = _interopRequireDefault(_helpers);
+
+	var _effects = __webpack_require__(3);
+
+	var _effects2 = _interopRequireDefault(_effects);
+
+	var _grid = __webpack_require__(6);
+
+	var _grid2 = _interopRequireDefault(_grid);
+
+	var _soundbites = __webpack_require__(8);
+
+	var _soundbites2 = _interopRequireDefault(_soundbites);
+
+	var _soundselector = __webpack_require__(7);
+
+	var _soundselector2 = _interopRequireDefault(_soundselector);
+
+	var _audiomanager = __webpack_require__(9);
+
+	var _audiomanager2 = _interopRequireDefault(_audiomanager);
+
+	var _sequencer = __webpack_require__(10);
+
+	var _sequencer2 = _interopRequireDefault(_sequencer);
+
+	var _audiotemplates = __webpack_require__(11);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var interact = __webpack_require__(5);
+
+	/*
+		Inteface interfaces between all views -- grid view, 
+		effects view, and sound selection view
+	*/
+
+	function Interface() {
+
+		//	establish containers in which to insert the views
+
+		var gridContainer = _helpers2.default.createDiv({ className: 'grid__container' }),
+		    effectsContainer = _helpers2.default.createDiv({ className: 'effects__container' }),
+		    soundSelectorContainer = _helpers2.default.createDiv({ className: 'soundSelector__container' });
+
+		//	get the audio templates
+
+		var filenames = _audiotemplates.templates.map(function (temp) {
+			return temp.filename;
+		});
+
+		//	create the views
+		var audioManager = new _audiomanager2.default(filenames),
+		    effects = new _effects2.default(effectsContainer),
+		    grid = new _grid2.default(gridContainer),
+		    soundBites = new _soundbites2.default(audioManager.getDefaultAudioParams(), _audiotemplates.templates),
+		    soundSelector = new _soundselector2.default(soundSelectorContainer, soundBites),
+		    sequencer = new _sequencer2.default(soundBites, audioManager, grid);
+
+		this.audioManager = audioManager;
+		this.sequencer = sequencer;
+		this.soundBites = soundBites;
+		this.effects = effects;
+		this.grid = grid;
+		this.soundSelector = soundSelector;
+
+		//	show the grid only
+
+		this.changeState('GRID');
+
+		//	configure events
+
+		this.listen();
+
+		//	start the looping
+
+		this.audioManager.loadSounds(audioManager.filenames).then(function () {
+			sequencer.loop();
+		});
+	}
+
+	Interface.prototype = {
+
+		constructor: Interface,
+
+		listen: function listen() {
+			this.handleEffectsButton();
+			this.handleEffectsCloseButton();
+			this.handleSoundSelectorButton();
+			this.handleSoundSelectorCloseButton();
+			this.handleSoundSelectorSoundBites();
+			this.handleGridSoundBites();
+		},
+
+		changeState: function changeState(state, target) {
+			var effects = this.effects,
+			    soundSelector = this.soundSelector,
+			    grid = this.grid;
+
+			if (state === 'GRID') {
+				effects.hide();
+				soundSelector.hide();
+				grid.show();
+
+				this.state = state;
+			}
+
+			if (state === 'SELECT_SOUNDS') {
+				effects.hide();
+				grid.hide();
+				soundSelector.show();
+
+				this.state = state;
+			}
+
+			if (state === 'AWAITING_EFFECTS') {
+				this.state = state;
+			}
+
+			if (state === 'EFFECTS') {
+				grid.hide();
+				soundSelector.hide();
+				effects.show(target);
+
+				this.state = state;
+			}
+
+			console.log('current state is', this.state);
+		},
+
+		//	effect control handlers
+
+		handleEffectsButton: function handleEffectsButton() {
+			var effectsButton = this.grid.controls.effects,
+			    ctx = this;
+
+			effectsButton.addEventListener('click', function () {
+				ctx.changeState('AWAITING_EFFECTS');
+			});
+		},
+
+		handleEffectsCloseButton: function handleEffectsCloseButton() {
+			var closeButton = this.effects.controls.close,
+			    ctx = this;
+
+			closeButton.addEventListener('click', function () {
+				ctx.changeState('GRID');
+			});
+		},
+
+		//	sound selector control handlers
+
+		handleSoundSelectorButton: function handleSoundSelectorButton() {
+			var soundSelectorButton = this.grid.controls.newSound,
+			    ctx = this;
+
+			newSound.addEventListener('click', function () {
+				ctx.changeState('SELECT_SOUNDS');
+			});
+		},
+
+		handleSoundSelectorCloseButton: function handleSoundSelectorCloseButton() {
+			var closeButton = this.soundSelector.controls.close,
+			    ctx = this;
+
+			closeButton.addEventListener('click', function () {
+				ctx.changeState('GRID');
+			});
+		},
+
+		//	sound bites handling while in SoundSelection
+
+		handleSoundSelectorSoundBites: function handleSoundSelectorSoundBites() {
+			var ctx = this,
+			    grid = this.grid,
+			    audioManager = this.audioManager,
+			    soundBites = this.soundBites,
+			    oneBite = soundBites.original[0],
+			    biteClass = '.' + oneBite.classNames.dockedInSoundSelector;
+
+			//	create a new bite on double tap
+
+			interact(biteClass).on('doubletap', function (event) {
+
+				//	to make web audio work properly in iOS
+
+				audioManager.playDummySound();
+
+				//	identify which kind of soundbite to create
+
+				var target = soundBites.getBiteById(event.target.id),
+				    template = target.template,
+				    container = grid.container;
+
+				//	change relevant bits of the template
+
+				template.type = 'inGrid';
+				template.container = container;
+				template.audioParams = ctx.audioManager.getDefaultAudioParams();
+
+				//	show the grid
+
+				ctx.changeState('GRID');
+
+				//	create the soundbite and add it to the document
+
+				soundBites.createBite(template);
+			});
+		},
+
+		handleGridSoundBites: function handleGridSoundBites() {
+			var soundBites = this.soundBites,
+			    grid = this.grid,
+			    oneBite = soundBites.original[0],
+			    biteClass = '.' + oneBite.classNames.inGrid,
+			    ctx = this;
+
+			//	handle drag and drop on the grid -- release
+
+			function elementRelease(event) {
+				var target = soundBites.getBiteById(event.target.id);
+				grid.dock(target);
+			}
+
+			//	handle pickup
+
+			function elementPickup(event) {
+				var target = soundBites.getBiteById(event.target.id);
+				target.beganWithMouseDown = true;
+				grid.undock(target, event);
+			}
+
+			//	handle effect selection
+
+			function effectSelection(event) {
+				var target = soundBites.getBiteById(event.target.id);
+				ctx.changeState('EFFECTS', target);
+			}
+
+			//	add the interactivity
+
+			interact(biteClass)
+
+			// make draggable
+
+			.draggable({ enabled: true, onmove: _helpers2.default.dragMoveListener })
+
+			//	determine whether to pick up the element or 
+			//	show the effects view
+
+			.on('down', function (event) {
+				var state = ctx.state;
+
+				if (state === 'GRID') {
+					elementPickup(event);
+				}
+
+				if (state === 'AWAITING_EFFECTS') {
+					effectSelection(event);
+				}
+			})
+
+			//	release element on mouseup / touchup
+
+			.on('up', elementRelease)
+
+			//	show the effects view if double clicking an element
+
+			.on('doubletap', function (event) {
+				effectSelection(event);
+			});
+		}
+
+	};
+
+	exports.default = Interface;
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	var Helpers = function () {
+
+		return {
+
+			randId: function randId(append) {
+				var id = Math.random().toString(36).substring(7);
+
+				if (append == null) return id;
+
+				return append + id;
+			},
+
+			setStyle: function setStyle(el, properties) {
+				var keys = Object.keys(properties);
+				keys.map(function (key) {
+					el.style[key] = properties[key];
+				});
+			},
+
+			toPixels: function toPixels(number) {
+				return number.toString() + 'px';
+			},
+
+			randInt: function randInt(min, max) {
+				return Math.round(Math.random() * (max - min) + min);
+			},
+
+			toRGB: function toRGB(r, g, b) {
+				return 'rgb(' + r.toString() + ',' + g.toString() + ',' + b.toString() + ')';
+			},
+
+			getElementCenterInViewport: function getElementCenterInViewport(width, height) {
+				var w = window.innerWidth,
+				    h = window.innerHeight;
+				return { top: (h - height) / 2, left: (w - width) / 2 };
+			},
+
+			getMatrixRepresentation: function getMatrixRepresentation(rows, cols) {
+				var matrix = [];
+				for (var i = 0; i < rows; i++) {
+					for (var k = 0; k < cols; k++) {
+						matrix.push({ row: i, col: k });
+					}
+				}
+				return matrix;
+			},
+
+			min: function min(arr) {
+				if (arr.length === 0) return;
+				if (arr.length === 1) return arr[0];
+
+				var min = arr[0];
+
+				for (var i = 1; i < arr.length; i++) {
+					min = Math.min(min, arr[i]);
+				}
+				return min;
+			},
+
+			max: function max(arr) {
+				if (arr.length === 0) return;
+				if (arr.length === 1) return arr[0];
+
+				var max = arr[0];
+
+				for (var i = 1; i < arr.length; i++) {
+					max = Math.max(max, arr[i]);
+				}
+				return max;
+			},
+
+			uniques: function uniques(arr) {
+				return arr.filter(function (val, i, self) {
+					return self.indexOf(val) === i;
+				});
+			},
+
+			//	generic template generator to create a row of cells
+
+			createRow: function createRow(nChildren, classNames, innerText, ids) {
+				var row = document.createElement('div');
+				row.className = 'row';
+
+				if (innerText != null) {
+					if (innerText.length !== nChildren) {
+						throw new Error('Each child cell must have its own innerHTML innerText');
+					}
+				}
+
+				for (var i = 0; i < nChildren; i++) {
+					var cell = document.createElement('div');
+
+					for (var k = 0; k < classNames.length; k++) {
+						cell.classList.add(classNames[k]);
+					}
+
+					//	add a randomized background color to the cell
+
+					cell.style.backgroundColor = Helpers.toRGB(20, 200, Helpers.randInt(0, 255));
+
+					//	set inner text if applicable
+
+					if (innerText != null) cell.innerHTML = innerText[i];
+					if (ids != null) cell.id = ids[i];
+
+					row.appendChild(cell);
+				}
+
+				return row;
+			},
+
+			//	add ids to a given row
+
+			addIds: function addIds(row, rowN) {
+				var nodes = row.childNodes;
+				for (var i = 0; i < nodes.length; i++) {
+					nodes[i].id = rowN.toString() + ',' + i.toString();
+				}
+			},
+
+			createDiv: function createDiv(options) {
+
+				var element = document.createElement('div');
+
+				if (options == null) return element;
+
+				for (var prop in options) {
+					element[prop] = options[prop];
+				}
+
+				return element;
+			},
+
+			dragMoveListener: function dragMoveListener(e) {
+				var target = e.target,
+				    x = (parseFloat(target.getAttribute('data-x')) || 0) + e.dx,
+				    y = (parseFloat(target.getAttribute('data-y')) || 0) + e.dy;
+
+				target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+				target.setAttribute('data-x', x);
+				target.setAttribute('data-y', y);
+			}
+		};
+	}();
+
+	exports.default = Helpers;
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _helpers = __webpack_require__(2);
+
+	var _helpers2 = _interopRequireDefault(_helpers);
+
+	var _viewtemplate = __webpack_require__(4);
+
+	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var interact = __webpack_require__(5);
+
+	function Effects(container) {
+
+		this.container = container;
+		this.view = null;
+		this.controls = {};
+		this.effects = {
+			gain: {},
+			filter: {},
+			pitch: {},
+			attack: {},
+			region: {}
+		};
+		this.soundBite = null;
+
+		this.create();
+		this.slider();
+	}
+
+	Effects.prototype = {
+
+		constructor: Effects,
+
+		create: function create() {
+
+			//	create the basic grid from the ViewTemplate
+
+			var view = new _viewtemplate2.default(this.container, [{
+				stickyHeader: true,
+				className: 'effects__header',
+				cellClassName: 'effects__cell__header',
+				innerText: ['close', 'play'],
+				ids: ['effects__close', 'effects__playSound'],
+				rows: 1,
+				cols: 2
+			}, {
+				className: 'effects__effects',
+				cellClassName: 'effects__cell',
+				cellClassPattern: ['', 'effects__cell__effect'],
+				rowClassName: 'effects__row',
+				rows: 0,
+				cols: 2,
+				ids: []
+			}], { name: 'effects' });
+
+			view.addToDocument();
+			view.keepCentered();
+			view.hide();
+
+			//	keep a reference to the control elements
+
+			this.controls.close = view.getCellById('effects__close');
+
+			//	add the view module
+
+			this.view = view;
+
+			//	create the effects
+
+			this.createEffects();
+		},
+
+		createEffect: function createEffect(id) {
+			var view = this.view,
+			    section = view.getSectionByClassName('effects__effects')[0],
+			    canvas = document.createElement('canvas');
+
+			canvas.className = 'effects__canvas';
+
+			section.ids = ['', id];
+			section.innerText = [id, ''];
+
+			view.createRow(section);
+			view.getCellById(id).appendChild(canvas);
+
+			this.effects[id].canvas = canvas;
+		},
+
+		createEffects: function createEffects() {
+			var effects = this.effects,
+			    ctx = this;
+
+			Object.keys(effects).map(function (key) {
+				ctx.createEffect(key);
+			});
+		},
+
+		//	get the percentage of the canvas width that the user
+		//	clicked / dragged
+
+		getXPercent: function getXPercent(event) {
+			var canvas = event.target,
+			    canvasLeft = canvas.getBoundingClientRect().left,
+			    canvasRight = canvas.getBoundingClientRect().right,
+			    clientX = event.clientX,
+			    percentage = (clientX - canvasLeft) / (canvasRight - canvasLeft);
+
+			return percentage;
+		},
+
+		drawRectangle: function drawRectangle(canvas, percent) {
+			var ctx = canvas.getContext('2d'),
+			    width = canvas.width * percent;
+
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.fillRect(0, 0, width, canvas.height);
+		},
+
+		//	set up canvas drag event listeners
+
+		slider: function slider() {
+			var ctx = this;
+
+			function assignValues(event) {
+				var type = event.target.parentNode.id,
+				    percent = ctx.getXPercent(event),
+				    soundBite = ctx.soundBite;
+
+				soundBite.audioParams[type].value = percent;
+			}
+
+			function draw(event) {
+				ctx.drawRectangle(event.target, ctx.getXPercent(event));
+			}
+
+			interact('.effects__canvas').draggable({
+				restrict: {
+					restriction: 'self'
+				},
+				max: Infinity
+			}).on('dragmove', function (event) {
+				assignValues(event);
+				draw(event);
+			}).on('click', function (event) {
+				assignValues(event);
+				draw(event);
+			});
+		},
+
+		show: function show(soundBite) {
+			this.view.show();
+			this.soundBite = soundBite;
+			this.slider();
+
+			var effectNames = Object.keys(this.effects);
+
+			for (var i = 0; i < effectNames.length; i++) {
+				var currentValue = soundBite.audioParams[effectNames[i]].value,
+				    currentCanvas = this.effects[effectNames[i]].canvas;
+
+				this.drawRectangle(currentCanvas, currentValue);
+			}
+		},
+
+		hide: function hide() {
+			this.view.hide();
+		}
+
+	};
+
+	exports.default = Effects;
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _helpers = __webpack_require__(2);
 
 	var _helpers2 = _interopRequireDefault(_helpers);
 
@@ -255,943 +883,7 @@
 	exports.default = ViewTemplate;
 
 /***/ },
-/* 3 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-	var Helpers = function () {
-
-		return {
-
-			randId: function randId(append) {
-				var id = Math.random().toString(36).substring(7);
-
-				if (append == null) return id;
-
-				return append + id;
-			},
-
-			setStyle: function setStyle(el, properties) {
-				var keys = Object.keys(properties);
-				keys.map(function (key) {
-					el.style[key] = properties[key];
-				});
-			},
-
-			toPixels: function toPixels(number) {
-				return number.toString() + 'px';
-			},
-
-			randInt: function randInt(min, max) {
-				return Math.round(Math.random() * (max - min) + min);
-			},
-
-			toRGB: function toRGB(r, g, b) {
-				return 'rgb(' + r.toString() + ',' + g.toString() + ',' + b.toString() + ')';
-			},
-
-			getElementCenterInViewport: function getElementCenterInViewport(width, height) {
-				var w = window.innerWidth,
-				    h = window.innerHeight;
-				return { top: (h - height) / 2, left: (w - width) / 2 };
-			},
-
-			getMatrixRepresentation: function getMatrixRepresentation(rows, cols) {
-				var matrix = [];
-				for (var i = 0; i < rows; i++) {
-					for (var k = 0; k < cols; k++) {
-						matrix.push({ row: i, col: k });
-					}
-				}
-				return matrix;
-			},
-
-			min: function min(arr) {
-				if (arr.length === 0) return;
-				if (arr.length === 1) return arr[0];
-
-				var min = arr[0];
-
-				for (var i = 1; i < arr.length; i++) {
-					min = Math.min(min, arr[i]);
-				}
-				return min;
-			},
-
-			max: function max(arr) {
-				if (arr.length === 0) return;
-				if (arr.length === 1) return arr[0];
-
-				var max = arr[0];
-
-				for (var i = 1; i < arr.length; i++) {
-					max = Math.max(max, arr[i]);
-				}
-				return max;
-			},
-
-			uniques: function uniques(arr) {
-				return arr.filter(function (val, i, self) {
-					return self.indexOf(val) === i;
-				});
-			},
-
-			//	generic template generator to create a row of cells
-
-			createRow: function createRow(nChildren, classNames, innerText, ids) {
-				var row = document.createElement('div');
-				row.className = 'row';
-
-				if (innerText != null) {
-					if (innerText.length !== nChildren) {
-						throw new Error('Each child cell must have its own innerHTML innerText');
-					}
-				}
-
-				for (var i = 0; i < nChildren; i++) {
-					var cell = document.createElement('div');
-
-					for (var k = 0; k < classNames.length; k++) {
-						cell.classList.add(classNames[k]);
-					}
-
-					//	add a randomized background color to the cell
-
-					cell.style.backgroundColor = Helpers.toRGB(20, 200, Helpers.randInt(0, 255));
-
-					//	set inner text if applicable
-
-					if (innerText != null) cell.innerHTML = innerText[i];
-					if (ids != null) cell.id = ids[i];
-
-					row.appendChild(cell);
-				}
-
-				return row;
-			},
-
-			//	add ids to a given row
-
-			addIds: function addIds(row, rowN) {
-				var nodes = row.childNodes;
-				for (var i = 0; i < nodes.length; i++) {
-					nodes[i].id = rowN.toString() + ',' + i.toString();
-				}
-			},
-
-			createDiv: function createDiv(options) {
-
-				var element = document.createElement('div');
-
-				if (options == null) return element;
-
-				for (var prop in options) {
-					element[prop] = options[prop];
-				}
-
-				return element;
-			},
-
-			dragMoveListener: function dragMoveListener(e) {
-				var target = e.target,
-				    x = (parseFloat(target.getAttribute('data-x')) || 0) + e.dx,
-				    y = (parseFloat(target.getAttribute('data-y')) || 0) + e.dy;
-
-				target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
-
-				target.setAttribute('data-x', x);
-				target.setAttribute('data-y', y);
-			}
-		};
-	}();
-
-	exports.default = Helpers;
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _helpers = __webpack_require__(3);
-
-	var _helpers2 = _interopRequireDefault(_helpers);
-
-	var _effects = __webpack_require__(5);
-
-	var _effects2 = _interopRequireDefault(_effects);
-
-	var _grid = __webpack_require__(6);
-
-	var _grid2 = _interopRequireDefault(_grid);
-
-	var _soundbites = __webpack_require__(11);
-
-	var _soundbites2 = _interopRequireDefault(_soundbites);
-
-	var _soundselector = __webpack_require__(8);
-
-	var _soundselector2 = _interopRequireDefault(_soundselector);
-
-	var _audiomanager = __webpack_require__(10);
-
-	var _audiomanager2 = _interopRequireDefault(_audiomanager);
-
-	var _sequencer = __webpack_require__(12);
-
-	var _sequencer2 = _interopRequireDefault(_sequencer);
-
-	var _audiotemplates = __webpack_require__(13);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var interact = __webpack_require__(9);
-
-	/*
-		Inteface interfaces between all views -- grid view, 
-		effects view, and sound selection view
-	*/
-
-	function Interface() {
-
-		//	establish containers in which to insert the views
-
-		var gridContainer = _helpers2.default.createDiv({ className: 'grid__container' }),
-		    effectsContainer = _helpers2.default.createDiv({ className: 'effects__container' }),
-		    soundSelectorContainer = _helpers2.default.createDiv({ className: 'soundSelector__container' });
-
-		//	get the audio templates
-
-		var filenames = _audiotemplates.templates.map(function (temp) {
-			return temp.filename;
-		});
-
-		//	create the views
-		var audioManager = new _audiomanager2.default(filenames),
-		    effects = new _effects2.default(effectsContainer),
-		    grid = new _grid2.default(gridContainer),
-		    soundBites = new _soundbites2.default(audioManager.getDefaultAudioParams(), _audiotemplates.templates),
-		    soundSelector = new _soundselector2.default(soundSelectorContainer, soundBites),
-		    sequencer = new _sequencer2.default(soundBites, audioManager, grid);
-
-		this.audioManager = audioManager;
-		this.sequencer = sequencer;
-		this.soundBites = soundBites;
-		this.effects = effects;
-		this.grid = grid;
-		this.soundSelector = soundSelector;
-
-		//	show the grid only
-
-		this.changeState('GRID');
-
-		//	configure events
-
-		this.listen();
-
-		//	start the looping
-
-		this.audioManager.loadSounds(audioManager.filenames).then(function () {
-			sequencer.loop();
-		});
-	}
-
-	Interface.prototype = {
-
-		constructor: Interface,
-
-		listen: function listen() {
-			this.handleEffectsButton();
-			this.handleEffectsCloseButton();
-			this.handleSoundSelectorButton();
-			this.handleSoundSelectorCloseButton();
-			this.handleSoundSelectorSoundBites();
-			this.handleGridSoundBites();
-		},
-
-		changeState: function changeState(state, target) {
-			var effects = this.effects,
-			    soundSelector = this.soundSelector,
-			    grid = this.grid;
-
-			if (state === 'GRID') {
-				effects.hide();
-				soundSelector.hide();
-				grid.show();
-
-				this.state = state;
-			}
-
-			if (state === 'SELECT_SOUNDS') {
-				effects.hide();
-				grid.hide();
-				soundSelector.show();
-
-				this.state = state;
-			}
-
-			if (state === 'AWAITING_EFFECTS') {
-				this.state = state;
-			}
-
-			if (state === 'EFFECTS') {
-				grid.hide();
-				soundSelector.hide();
-				effects.show(target);
-
-				this.state = state;
-			}
-
-			console.log('current state is', this.state);
-		},
-
-		//	effect control handlers
-
-		handleEffectsButton: function handleEffectsButton() {
-			var effectsButton = this.grid.controls.effects,
-			    ctx = this;
-
-			effectsButton.addEventListener('click', function () {
-				ctx.changeState('AWAITING_EFFECTS');
-			});
-		},
-
-		handleEffectsCloseButton: function handleEffectsCloseButton() {
-			var closeButton = this.effects.controls.close,
-			    ctx = this;
-
-			closeButton.addEventListener('click', function () {
-				ctx.changeState('GRID');
-			});
-		},
-
-		//	sound selector control handlers
-
-		handleSoundSelectorButton: function handleSoundSelectorButton() {
-			var soundSelectorButton = this.grid.controls.newSound,
-			    ctx = this;
-
-			newSound.addEventListener('click', function () {
-				ctx.changeState('SELECT_SOUNDS');
-			});
-		},
-
-		handleSoundSelectorCloseButton: function handleSoundSelectorCloseButton() {
-			var closeButton = this.soundSelector.controls.close,
-			    ctx = this;
-
-			closeButton.addEventListener('click', function () {
-				ctx.changeState('GRID');
-			});
-		},
-
-		//	sound bites handling while in SoundSelection
-
-		handleSoundSelectorSoundBites: function handleSoundSelectorSoundBites() {
-			var ctx = this,
-			    grid = this.grid,
-			    soundBites = this.soundBites,
-			    oneBite = soundBites.original[0],
-			    biteClass = '.' + oneBite.classNames.dockedInSoundSelector;
-
-			//	create a new bite on double tap
-
-			interact(biteClass).on('doubletap', function (event) {
-
-				//	identify which kind of soundbite to create
-
-				var target = soundBites.getBiteById(event.target.id),
-				    template = target.template,
-				    container = grid.container;
-
-				//	change relevant bits of the template
-
-				template.type = 'inGrid';
-				template.container = container;
-				template.audioParams = ctx.audioManager.getDefaultAudioParams();
-
-				//	show the grid
-
-				ctx.changeState('GRID');
-
-				//	create the soundbite and add it to the document
-
-				soundBites.createBite(template);
-			});
-		},
-
-		handleGridSoundBites: function handleGridSoundBites() {
-			var soundBites = this.soundBites,
-			    grid = this.grid,
-			    oneBite = soundBites.original[0],
-			    biteClass = '.' + oneBite.classNames.inGrid,
-			    ctx = this;
-
-			//	handle drag and drop on the grid -- release
-
-			function elementRelease(event) {
-				var target = soundBites.getBiteById(event.target.id);
-				grid.dock(target);
-			}
-
-			//	handle pickup
-
-			function elementPickup(event) {
-				var target = soundBites.getBiteById(event.target.id);
-				target.beganWithMouseDown = true;
-				grid.undock(target, event);
-			}
-
-			//	handle effect selection
-
-			function effectSelection(event) {
-				var target = soundBites.getBiteById(event.target.id);
-				ctx.changeState('EFFECTS', target);
-			}
-
-			//	add the interactivity
-
-			interact(biteClass)
-
-			// make draggable
-
-			.draggable({ enabled: true, onmove: _helpers2.default.dragMoveListener })
-
-			//	determine whether to pick up the element or 
-			//	show the effects view
-
-			.on('down', function (event) {
-				var state = ctx.state;
-
-				if (state === 'GRID') {
-					elementPickup(event);
-				}
-
-				if (state === 'AWAITING_EFFECTS') {
-					effectSelection(event);
-				}
-			})
-
-			//	release element on mouseup / touchup
-
-			.on('up', elementRelease)
-
-			//	show the effects view if double clicking an element
-
-			.on('doubletap', function (event) {
-				effectSelection(event);
-			});
-		}
-
-	};
-
-	exports.default = Interface;
-
-/***/ },
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _helpers = __webpack_require__(3);
-
-	var _helpers2 = _interopRequireDefault(_helpers);
-
-	var _viewtemplate = __webpack_require__(2);
-
-	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var interact = __webpack_require__(9);
-
-	function Effects(container) {
-
-		this.container = container;
-		this.view = null;
-		this.controls = {};
-		this.effects = {
-			gain: {},
-			filter: {},
-			pitch: {},
-			attack: {},
-			region: {}
-		};
-		this.soundBite = null;
-
-		this.create();
-		this.slider();
-	}
-
-	Effects.prototype = {
-
-		constructor: Effects,
-
-		create: function create() {
-
-			//	create the basic grid from the ViewTemplate
-
-			var view = new _viewtemplate2.default(this.container, [{
-				stickyHeader: true,
-				className: 'effects__header',
-				cellClassName: 'effects__cell__header',
-				innerText: ['close', 'play'],
-				ids: ['effects__close', 'effects__playSound'],
-				rows: 1,
-				cols: 2
-			}, {
-				className: 'effects__effects',
-				cellClassName: 'effects__cell',
-				cellClassPattern: ['', 'effects__cell__effect'],
-				rowClassName: 'effects__row',
-				rows: 0,
-				cols: 2,
-				ids: []
-			}], { name: 'effects' });
-
-			view.addToDocument();
-			view.keepCentered();
-			view.hide();
-
-			//	keep a reference to the control elements
-
-			this.controls.close = view.getCellById('effects__close');
-
-			//	add the view module
-
-			this.view = view;
-
-			//	create the effects
-
-			this.createEffects();
-		},
-
-		createEffect: function createEffect(id) {
-			var view = this.view,
-			    section = view.getSectionByClassName('effects__effects')[0],
-			    canvas = document.createElement('canvas');
-
-			canvas.className = 'effects__canvas';
-
-			section.ids = ['', id];
-			section.innerText = [id, ''];
-
-			view.createRow(section);
-			view.getCellById(id).appendChild(canvas);
-
-			this.effects[id].canvas = canvas;
-		},
-
-		createEffects: function createEffects() {
-			var effects = this.effects,
-			    ctx = this;
-
-			Object.keys(effects).map(function (key) {
-				ctx.createEffect(key);
-			});
-		},
-
-		//	get the percentage of the canvas width that the user
-		//	clicked / dragged
-
-		getXPercent: function getXPercent(event) {
-			var canvas = event.target,
-			    canvasLeft = canvas.getBoundingClientRect().left,
-			    canvasRight = canvas.getBoundingClientRect().right,
-			    clientX = event.clientX,
-			    percentage = (clientX - canvasLeft) / (canvasRight - canvasLeft);
-
-			return percentage;
-		},
-
-		drawRectangle: function drawRectangle(canvas, percent) {
-			var ctx = canvas.getContext('2d'),
-			    width = canvas.width * percent;
-
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			ctx.fillRect(0, 0, width, canvas.height);
-		},
-
-		//	set up canvas drag event listeners
-
-		slider: function slider() {
-			var ctx = this;
-
-			function assignValues(event) {
-				var type = event.target.parentNode.id,
-				    percent = ctx.getXPercent(event),
-				    soundBite = ctx.soundBite;
-
-				soundBite.audioParams[type].value = percent;
-			}
-
-			function draw(event) {
-				ctx.drawRectangle(event.target, ctx.getXPercent(event));
-			}
-
-			interact('.effects__canvas').draggable({
-				restrict: {
-					restriction: 'self'
-				},
-				max: Infinity
-			}).on('dragmove', function (event) {
-				assignValues(event);
-				draw(event);
-			}).on('click', function (event) {
-				assignValues(event);
-				draw(event);
-			});
-		},
-
-		show: function show(soundBite) {
-			this.view.show();
-			this.soundBite = soundBite;
-			this.slider();
-
-			var effectNames = Object.keys(this.effects);
-
-			for (var i = 0; i < effectNames.length; i++) {
-				var currentValue = soundBite.audioParams[effectNames[i]].value,
-				    currentCanvas = this.effects[effectNames[i]].canvas;
-
-				this.drawRectangle(currentCanvas, currentValue);
-			}
-		},
-
-		hide: function hide() {
-			this.view.hide();
-		}
-
-	};
-
-	exports.default = Effects;
-
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _helpers = __webpack_require__(3);
-
-	var _helpers2 = _interopRequireDefault(_helpers);
-
-	var _soundselector = __webpack_require__(8);
-
-	var _soundselector2 = _interopRequireDefault(_soundselector);
-
-	var _viewtemplate = __webpack_require__(2);
-
-	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function Grid(container) {
-
-		this.dimensions = {
-			rows: 6, cols: 8
-		};
-
-		this.container = container;
-		this.cells = [];
-		this.controls = null;
-		this.soundSelector = null;
-
-		this.view = this.create();
-	}
-
-	Grid.prototype = {
-
-		constructor: Grid,
-
-		dock: function dock(soundbite) {
-
-			//	if we didn't initiate a touch with the mouse on the element
-			//	don't dock
-
-			if (!soundbite.beganWithMouseDown) return;
-			soundbite.beganWithMouseDown = false;
-
-			//	only dock the element if we're within the grid
-
-			if (!this.isInsideGridBounds(soundbite.element)) return;
-
-			//	find the closest nearby cell
-
-			var closestCell = this.nearestEmptyCell(soundbite.element),
-			    cellElement = closestCell.element;
-
-			//	update the soundbite's properties to reflect the docking
-
-			soundbite.setDocked(closestCell.id);
-
-			//	add it to the parent, and mark that the parent encloses an element
-
-			cellElement.appendChild(soundbite.element);
-			closestCell.isEmpty = false;
-		},
-
-		undock: function undock(soundbite, event) {
-
-			var dockedCell = this.getCellById(soundbite.gridId);
-
-			if (dockedCell === -1) return;
-
-			// dockedCell.element.removeChild(soundbite.element)
-			// soundbite.template.container.appendChild(soundbite.element)
-			dockedCell.isEmpty = true;
-
-			soundbite.setUndocked();
-		},
-
-		isInsideGridBounds: function isInsideGridBounds(element) {
-			var gridRect = this.grid.getBoundingClientRect(),
-			    elementRect = element.getBoundingClientRect(),
-			    elementWidth = elementRect.width,
-			    elementHeight = elementRect.height,
-			    adjustedPosition = {
-				left: elementRect.left + elementWidth / 2,
-				top: elementRect.top + elementHeight / 2,
-				right: elementRect.right - elementWidth / 2,
-				bottom: elementRect.bottom - elementHeight / 2
-			};
-
-			if (adjustedPosition.left < gridRect.left || adjustedPosition.top < gridRect.top) {
-				return false;
-			}
-
-			if (adjustedPosition.right > gridRect.right || adjustedPosition.bottom > gridRect.bottom) {
-				return false;
-			}
-
-			return true;
-		},
-
-
-		getEmptyCells: function getEmptyCells() {
-			return this.cells.filter(function (cell) {
-				return cell.isEmpty === true;
-			});
-		},
-
-		getCellById: function getCellById(id) {
-			var cell = this.cells.filter(function (cell) {
-				return cell.id === id;
-			});
-			if (cell.length === 0) return -1;
-			return cell[0];
-		},
-
-		nearestEmptyCell: function nearestEmptyCell(element) {
-			var cells = this.getEmptyCells(),
-			    position = element.getBoundingClientRect();
-
-			var min = cells.reduce(function (offsets, cell, i) {
-				var cellPosition = cell.element.getBoundingClientRect(),
-				    x = Math.abs(position.left - cellPosition.left),
-				    y = Math.abs(position.top - cellPosition.top);
-
-				if (i === 0 || x <= offsets.x && y <= offsets.y) {
-					Object.assign(offsets, { x: x, y: y, id: cell.id });
-				}
-				return offsets;
-			}, {});
-
-			return cells.filter(function (cell) {
-				return cell.id === min.id;
-			})[0];
-		},
-
-		//	draw + create the grid
-
-		create: function create() {
-
-			//	define the control text and ids
-
-			var controlIds = ['play', 'direction', 'effects', 'newSound'],
-			    controlText = ['play', 'direc', 'fx', '+'];
-
-			//	create the basic grid from the ViewTemplate
-
-			var view = new _viewtemplate2.default(this.container, [{
-				stickyHeader: true,
-				className: 'grid__controls',
-				cellClassName: 'grid__cell__controls',
-				rows: 1,
-				cols: 4,
-				innerText: controlText,
-				ids: controlIds
-			}, {
-				className: 'grid__sounds',
-				rows: this.dimensions.rows,
-				cols: this.dimensions.cols,
-				ids: 'auto'
-			}]);
-
-			//	get the control elements separately
-
-			this.controls = {
-				play: view.getCellById('play'),
-				direction: view.getCellById('direction'),
-				effects: view.getCellById('effects'),
-				newSound: view.getCellById('newSound')
-			};
-
-			//	get the grid section separately
-
-			this.grid = view.container;
-
-			//	get the cells separately
-
-			var cells = [];
-
-			view.getCellsInSection('grid__sounds').map(function (cell) {
-				cells.push({
-					element: cell,
-					id: cell.id,
-					isEmpty: true
-				});
-			});
-
-			this.cells = cells;
-
-			//	display the grid, and keep it centered in the viewport
-
-			this.style(view);
-
-			view.addToDocument();
-			view.keepCentered();
-			view.hide();
-
-			return view;
-		},
-
-		style: function style(view) {
-			view.getAllCells().map(function (cell) {
-				_helpers2.default.setStyle(cell, {
-					backgroundColor: _helpers2.default.toRGB(20, 200, _helpers2.default.randInt(0, 255))
-				});
-			});
-		},
-
-		//	control display
-
-		hide: function hide() {
-			this.view.hide();
-		},
-
-		show: function show() {
-			this.view.show();
-		}
-	};
-
-	exports.default = Grid;
-
-/***/ },
-/* 7 */,
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _viewtemplate = __webpack_require__(2);
-
-	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function SoundSelector(container, bites) {
-
-		this.bites = bites;
-		this.container = container;
-		this.controls = {};
-		this.view = this.create();
-		this.addBites();
-	}
-
-	SoundSelector.prototype = {
-		constructor: SoundSelector,
-
-		create: function create() {
-
-			//	create the basic grid from the ViewTemplate
-
-			var nCols = 2,
-			    nRows = Math.ceil(this.bites.original.length / nCols);
-
-			var view = new _viewtemplate2.default(this.container, [{
-				stickyHeader: true,
-				className: 'soundSelector__header',
-				cellClassName: 'soundSelector__cell__header',
-				innerText: ['close', 'select'],
-				ids: ['soundSelector__close', 'soundSelector__select'],
-				rows: 1,
-				cols: 2
-			}, {
-				className: 'soundSelector__sounds',
-				cellClassName: 'soundSelector__cell',
-				rowClassName: 'soundSelector__row',
-				rows: nRows,
-				cols: nCols,
-				ids: []
-			}], { name: 'soundSelector' });
-
-			view.addToDocument();
-			view.keepCentered();
-			view.hide();
-
-			this.controls.select = view.getCellById('soundSelector__select');
-			this.controls.close = view.getCellById('soundSelector__close');
-
-			return view;
-		},
-
-		addBites: function addBites() {
-			var view = this.view,
-			    cells = view.getCellsInSection('soundSelector__sounds'),
-			    bites = this.bites.original;
-
-			for (var i = 0; i < bites.length; i++) {
-				cells[i].appendChild(bites[i].element);
-			}
-		},
-
-		//	control displaying
-
-		hide: function hide() {
-			this.view.hide();
-		},
-
-		show: function show() {
-			this.view.show();
-		}
-
-	};
-
-	exports.default = SoundSelector;
-
-/***/ },
-/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7173,7 +6865,503 @@
 
 
 /***/ },
-/* 10 */
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _helpers = __webpack_require__(2);
+
+	var _helpers2 = _interopRequireDefault(_helpers);
+
+	var _soundselector = __webpack_require__(7);
+
+	var _soundselector2 = _interopRequireDefault(_soundselector);
+
+	var _viewtemplate = __webpack_require__(4);
+
+	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function Grid(container) {
+
+		this.dimensions = {
+			rows: 6, cols: 8
+		};
+
+		this.container = container;
+		this.cells = [];
+		this.controls = null;
+		this.soundSelector = null;
+
+		this.view = this.create();
+	}
+
+	Grid.prototype = {
+
+		constructor: Grid,
+
+		dock: function dock(soundbite) {
+
+			//	if we didn't initiate a touch with the mouse on the element
+			//	don't dock
+
+			if (!soundbite.beganWithMouseDown) return;
+			soundbite.beganWithMouseDown = false;
+
+			//	only dock the element if we're within the grid
+
+			if (!this.isInsideGridBounds(soundbite.element)) return;
+
+			//	find the closest nearby cell
+
+			var closestCell = this.nearestEmptyCell(soundbite.element),
+			    cellElement = closestCell.element;
+
+			//	update the soundbite's properties to reflect the docking
+
+			soundbite.setDocked(closestCell.id);
+
+			//	add it to the parent, and mark that the parent encloses an element
+
+			cellElement.appendChild(soundbite.element);
+			closestCell.isEmpty = false;
+		},
+
+		undock: function undock(soundbite, event) {
+
+			var dockedCell = this.getCellById(soundbite.gridId);
+
+			if (dockedCell === -1) return;
+
+			// dockedCell.element.removeChild(soundbite.element)
+			// soundbite.template.container.appendChild(soundbite.element)
+			dockedCell.isEmpty = true;
+
+			soundbite.setUndocked();
+		},
+
+		isInsideGridBounds: function isInsideGridBounds(element) {
+			var gridRect = this.grid.getBoundingClientRect(),
+			    elementRect = element.getBoundingClientRect(),
+			    elementWidth = elementRect.width,
+			    elementHeight = elementRect.height,
+			    adjustedPosition = {
+				left: elementRect.left + elementWidth / 2,
+				top: elementRect.top + elementHeight / 2,
+				right: elementRect.right - elementWidth / 2,
+				bottom: elementRect.bottom - elementHeight / 2
+			};
+
+			if (adjustedPosition.left < gridRect.left || adjustedPosition.top < gridRect.top) {
+				return false;
+			}
+
+			if (adjustedPosition.right > gridRect.right || adjustedPosition.bottom > gridRect.bottom) {
+				return false;
+			}
+
+			return true;
+		},
+
+
+		getEmptyCells: function getEmptyCells() {
+			return this.cells.filter(function (cell) {
+				return cell.isEmpty === true;
+			});
+		},
+
+		getCellById: function getCellById(id) {
+			var cell = this.cells.filter(function (cell) {
+				return cell.id === id;
+			});
+			if (cell.length === 0) return -1;
+			return cell[0];
+		},
+
+		nearestEmptyCell: function nearestEmptyCell(element) {
+			var cells = this.getEmptyCells(),
+			    position = element.getBoundingClientRect();
+
+			var min = cells.reduce(function (offsets, cell, i) {
+				var cellPosition = cell.element.getBoundingClientRect(),
+				    x = Math.abs(position.left - cellPosition.left),
+				    y = Math.abs(position.top - cellPosition.top);
+
+				if (i === 0 || x <= offsets.x && y <= offsets.y) {
+					Object.assign(offsets, { x: x, y: y, id: cell.id });
+				}
+				return offsets;
+			}, {});
+
+			return cells.filter(function (cell) {
+				return cell.id === min.id;
+			})[0];
+		},
+
+		//	draw + create the grid
+
+		create: function create() {
+
+			//	define the control text and ids
+
+			var controlIds = ['play', 'direction', 'effects', 'newSound'],
+			    controlText = ['play', 'direc', 'fx', '+'];
+
+			//	create the basic grid from the ViewTemplate
+
+			var view = new _viewtemplate2.default(this.container, [{
+				stickyHeader: true,
+				className: 'grid__controls',
+				cellClassName: 'grid__cell__controls',
+				rows: 1,
+				cols: 4,
+				innerText: controlText,
+				ids: controlIds
+			}, {
+				className: 'grid__sounds',
+				rows: this.dimensions.rows,
+				cols: this.dimensions.cols,
+				ids: 'auto'
+			}]);
+
+			//	get the control elements separately
+
+			this.controls = {
+				play: view.getCellById('play'),
+				direction: view.getCellById('direction'),
+				effects: view.getCellById('effects'),
+				newSound: view.getCellById('newSound')
+			};
+
+			//	get the grid section separately
+
+			this.grid = view.container;
+
+			//	get the cells separately
+
+			var cells = [];
+
+			view.getCellsInSection('grid__sounds').map(function (cell) {
+				cells.push({
+					element: cell,
+					id: cell.id,
+					isEmpty: true
+				});
+			});
+
+			this.cells = cells;
+
+			//	display the grid, and keep it centered in the viewport
+
+			this.style(view);
+
+			view.addToDocument();
+			view.keepCentered();
+			view.hide();
+
+			return view;
+		},
+
+		style: function style(view) {
+			view.getAllCells().map(function (cell) {
+				_helpers2.default.setStyle(cell, {
+					backgroundColor: _helpers2.default.toRGB(20, 200, _helpers2.default.randInt(0, 255))
+				});
+			});
+		},
+
+		//	control display
+
+		hide: function hide() {
+			this.view.hide();
+		},
+
+		show: function show() {
+			this.view.show();
+		}
+	};
+
+	exports.default = Grid;
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _viewtemplate = __webpack_require__(4);
+
+	var _viewtemplate2 = _interopRequireDefault(_viewtemplate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function SoundSelector(container, bites) {
+
+		this.bites = bites;
+		this.container = container;
+		this.controls = {};
+		this.view = this.create();
+		this.addBites();
+	}
+
+	SoundSelector.prototype = {
+		constructor: SoundSelector,
+
+		create: function create() {
+
+			//	create the basic grid from the ViewTemplate
+
+			var nCols = 2,
+			    nRows = Math.ceil(this.bites.original.length / nCols);
+
+			var view = new _viewtemplate2.default(this.container, [{
+				stickyHeader: true,
+				className: 'soundSelector__header',
+				cellClassName: 'soundSelector__cell__header',
+				innerText: ['close', 'select'],
+				ids: ['soundSelector__close', 'soundSelector__select'],
+				rows: 1,
+				cols: 2
+			}, {
+				className: 'soundSelector__sounds',
+				cellClassName: 'soundSelector__cell',
+				rowClassName: 'soundSelector__row',
+				rows: nRows,
+				cols: nCols,
+				ids: []
+			}], { name: 'soundSelector' });
+
+			view.addToDocument();
+			view.keepCentered();
+			view.hide();
+
+			this.controls.select = view.getCellById('soundSelector__select');
+			this.controls.close = view.getCellById('soundSelector__close');
+
+			return view;
+		},
+
+		addBites: function addBites() {
+			var view = this.view,
+			    cells = view.getCellsInSection('soundSelector__sounds'),
+			    bites = this.bites.original;
+
+			for (var i = 0; i < bites.length; i++) {
+				cells[i].appendChild(bites[i].element);
+			}
+		},
+
+		//	control displaying
+
+		hide: function hide() {
+			this.view.hide();
+		},
+
+		show: function show() {
+			this.view.show();
+		}
+
+	};
+
+	exports.default = SoundSelector;
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _audiomanager = __webpack_require__(9);
+
+	var _audiomanager2 = _interopRequireDefault(_audiomanager);
+
+	var _helpers = __webpack_require__(2);
+
+	var _helpers2 = _interopRequireDefault(_helpers);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	//	SoundBites is an array of soundbites
+
+	function SoundBites(audioParams, templates) {
+
+		this.templates = templates;
+
+		this.original = this.templates.map(function (temp) {
+			temp.type = 'dockedInSoundSelector';
+			temp.audioParams = audioParams;
+			return new SoundBite(temp);
+		});
+
+		this.inuse = [];
+		this.all = [];
+		this.getAllBites();
+	}
+
+	SoundBites.prototype = {
+		constructor: SoundBites,
+
+		createBite: function createBite(template) {
+			this.inuse.push(new SoundBite(template));
+			this.getAllBites();
+		},
+
+		getAllBites: function getAllBites() {
+			this.all = this.all.concat(this.original, this.inuse);
+		},
+
+		getBiteById: function getBiteById(id) {
+			var found = this.all.filter(function (bite) {
+				return bite.id === id;
+			});
+			if (found.length === 0) return -1;
+			return found[0];
+		},
+
+		getInUseBitesInRowOrColumn: function getInUseBitesInRowOrColumn(type, n) {
+			var bites = this.inuse;
+
+			return bites.filter(function (bite) {
+				if (bite.isDocked === false) return false;
+
+				var currentId = bite.gridId,
+				    indexOfStrComponent = 0,
+				    splitString = currentId.split(',');
+
+				if (type === 'columns') indexOfStrComponent = 1;
+
+				return splitString[indexOfStrComponent] === n.toString();
+			});
+		},
+
+		getFilenames: function getFilenames() {
+			return this.templates.filter(function (template) {
+				template.filename;
+			});
+		}
+	};
+
+	//	an individual soundbite
+
+	function SoundBite(template) {
+
+		this.classNames = {
+			base: 'soundbite',
+			inGrid: 'soundbite__grid',
+			dockedInGrid: 'soundbite__grid__docked',
+			undockedInGrid: 'soundbite__grid__undocked',
+			dockedInSoundSelector: 'soundbite__soundSelector'
+		};
+		this.id = _helpers2.default.randId('soundbite_');
+		this.gridId = null;
+		this.isDocked = false;
+		this.audioParams = template.audioParams;
+		this.filename = template.filename;
+		this.color = template.color;
+		this.template = template;
+
+		this.element = _helpers2.default.createDiv({ className: this.classNames.base, id: this.id });
+		_helpers2.default.setStyle(this.element, { backgroundColor: this.color });
+
+		if (template.type != null) {
+			var additionalClass = this.classNames[template.type];
+			this.element.classList.add(additionalClass);
+		}
+
+		if (template.container != null) {
+			template.container.appendChild(this.element);
+		}
+	}
+
+	SoundBite.prototype = {
+		constructor: SoundBite,
+
+		setDocked: function setDocked(id) {
+			var element = this.element;
+
+			//	get rid of the element's style attributes
+
+			element.removeAttribute('style');
+
+			element.style.backgroundColor = this.color;
+
+			element.setAttribute('data-x', 0);
+			element.setAttribute('data-y', 0);
+
+			//	make it inherit the style of its parent
+
+			element.classList.remove(this.classNames.undockedInGrid);
+			element.classList.add(this.classNames.dockedInGrid);
+
+			//	mark as docked, and take note of the row / col
+			//	in which we're docked
+
+			this.gridId = id;
+			this.isDocked = true;
+		},
+
+		setUndocked: function setUndocked(event) {
+			var element = this.element,
+			    dockedClass = this.classNames.dockedInGrid,
+			    undockedClass = this.classNames.undockedInGrid;
+
+			element.classList.remove(dockedClass);
+			element.classList.add(undockedClass);
+
+			element.style.backgroundColor = this.template.color;
+
+			element.setAttribute('data-x', 0);
+			element.setAttribute('data-y', 0);
+
+			this.isDocked = false;
+			this.gridId = null;
+		},
+
+		setPosition: function setPosition() {
+			var element = this.element,
+			    cell = this.containerCell,
+			    cellRect = cell.getBoundingClientRect();
+
+			var top = _helpers2.default.toPixels(cellRect.top),
+			    left = _helpers2.default.toPixels(cellRect.left);
+
+			_helpers2.default.setStyle(element, { top: top, left: left });
+		},
+
+		setDimensions: function setDimensions() {
+			var element = this.element,
+			    cell = this.containerCell,
+			    cellRect = cell.getBoundingClientRect(),
+			    width = _helpers2.default.toPixels(cellRect.width),
+			    height = _helpers2.default.toPixels(cellRect.height);
+
+			_helpers2.default.setStyle(element, { width: width, height: height });
+		},
+
+		resizeHandler: function resizeHandler() {
+			this.setPosition();
+			this.setDimensions();
+		}
+	};
+
+	exports.default = SoundBites;
+
+/***/ },
+/* 9 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7186,6 +7374,7 @@
 		this.params = this.getDefaultAudioParams();
 		this.buffers = [];
 		this.filenames = filenames;
+		this.playedDummySound = false; //	for proper iOS audio
 	}
 
 	AudioManager.prototype = {
@@ -7425,237 +7614,27 @@
 
 		transformToFullValue: function transformToFullValue(min, max, percentage) {
 			return Math.round((max - min) * percentage + min);
+		},
+
+		playDummySound: function playDummySound() {
+			if (this.playedDummySound) return;
+
+			var buffer = this.context.createBuffer(1, 1, 22050),
+			    source = this.context.createBufferSource();
+
+			source.buffer = buffer;
+			source.connect(this.context.destination);
+			source.start(0);
+
+			this.playedDummySound = true;
 		}
 
 	};
 
 	exports.default = AudioManager;
 
-	// //	testing it all out
-
-	// let filenames = [
-	// 	'celeste_piano_c.mp3',
-	// 	'celeste_piano_g_e.mp3',
-	// 	'celeste_piano_c_e.mp3'
-	// ]
-
-	// const manager = new AudioManager(filenames)
-
-	// const test__params = [
-	// 	{
-	// 		filter: { enabled: true, frequency: .2 },
-	// 		gain: { enabled: false, value: 1 },
-	// 		envelope: { enabled: true, attack: .2, release: 1 } 
-	// 	},
-	// 	{
-	// 		filter: { enabled: true, frequency: 1 },
-	// 		gain: { enabled: false, value: .5 },
-	// 		pitch: { enabled: true, semitone: 0 }
-	// 	},
-	// 	{ 
-	// 		filter: { enabled: true, frequency: 1 },
-	// 		gain: { enabled: false, value: 1 },
-	// 		reverse: { enabled: true },
-	// 		region: { enabled: true, start: .8 },
-	// 		pitch: { enabled: true, semitone: -12 },
-	// 		envelope: { enabled: true, attack: 0 }
-	// 	}
-	// ]
-
-	// manager.loadSounds(manager.filenames)
-	// 	.then(function() {
-	// 		for (let i=0; i<test__params.length; i++) {
-	// 			manager.processAndPlay({ filename: filenames[i], audioParams: test__params[i] })
-	// 		}
-	// 	})
-
 /***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _audiomanager = __webpack_require__(10);
-
-	var _audiomanager2 = _interopRequireDefault(_audiomanager);
-
-	var _helpers = __webpack_require__(3);
-
-	var _helpers2 = _interopRequireDefault(_helpers);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	//	SoundBites is an array of soundbites
-
-	function SoundBites(audioParams, templates) {
-
-		this.templates = templates;
-
-		this.original = this.templates.map(function (temp) {
-			temp.type = 'dockedInSoundSelector';
-			temp.audioParams = audioParams;
-			return new SoundBite(temp);
-		});
-
-		this.inuse = [];
-		this.all = [];
-		this.getAllBites();
-	}
-
-	SoundBites.prototype = {
-		constructor: SoundBites,
-
-		createBite: function createBite(template) {
-			this.inuse.push(new SoundBite(template));
-			this.getAllBites();
-		},
-
-		getAllBites: function getAllBites() {
-			this.all = this.all.concat(this.original, this.inuse);
-		},
-
-		getBiteById: function getBiteById(id) {
-			var found = this.all.filter(function (bite) {
-				return bite.id === id;
-			});
-			if (found.length === 0) return -1;
-			return found[0];
-		},
-
-		getInUseBitesInRowOrColumn: function getInUseBitesInRowOrColumn(type, n) {
-			var bites = this.inuse;
-
-			return bites.filter(function (bite) {
-				if (bite.isDocked === false) return false;
-
-				var currentId = bite.gridId,
-				    indexOfStrComponent = 0,
-				    splitString = currentId.split(',');
-
-				if (type === 'columns') indexOfStrComponent = 1;
-
-				return splitString[indexOfStrComponent] === n.toString();
-			});
-		},
-
-		getFilenames: function getFilenames() {
-			return this.templates.filter(function (template) {
-				template.filename;
-			});
-		}
-	};
-
-	//	an individual soundbite
-
-	function SoundBite(template) {
-
-		this.classNames = {
-			base: 'soundbite',
-			inGrid: 'soundbite__grid',
-			dockedInGrid: 'soundbite__grid__docked',
-			undockedInGrid: 'soundbite__grid__undocked',
-			dockedInSoundSelector: 'soundbite__soundSelector'
-		};
-		this.id = _helpers2.default.randId('soundbite_');
-		this.gridId = null;
-		this.isDocked = false;
-		this.audioParams = template.audioParams;
-		this.filename = template.filename;
-		this.color = template.color;
-		this.template = template;
-
-		this.element = _helpers2.default.createDiv({ className: this.classNames.base, id: this.id });
-		_helpers2.default.setStyle(this.element, { backgroundColor: this.color });
-
-		if (template.type != null) {
-			var additionalClass = this.classNames[template.type];
-			this.element.classList.add(additionalClass);
-		}
-
-		if (template.container != null) {
-			template.container.appendChild(this.element);
-		}
-	}
-
-	SoundBite.prototype = {
-		constructor: SoundBite,
-
-		setDocked: function setDocked(id) {
-			var element = this.element;
-
-			//	get rid of the element's style attributes
-
-			element.removeAttribute('style');
-
-			element.style.backgroundColor = this.color;
-
-			element.setAttribute('data-x', 0);
-			element.setAttribute('data-y', 0);
-
-			//	make it inherit the style of its parent
-
-			element.classList.remove(this.classNames.undockedInGrid);
-			element.classList.add(this.classNames.dockedInGrid);
-
-			//	mark as docked, and take note of the row / col
-			//	in which we're docked
-
-			this.gridId = id;
-			this.isDocked = true;
-		},
-
-		setUndocked: function setUndocked(event) {
-			var element = this.element,
-			    dockedClass = this.classNames.dockedInGrid,
-			    undockedClass = this.classNames.undockedInGrid;
-
-			element.classList.remove(dockedClass);
-			element.classList.add(undockedClass);
-
-			element.style.backgroundColor = this.template.color;
-
-			element.setAttribute('data-x', 0);
-			element.setAttribute('data-y', 0);
-
-			this.isDocked = false;
-			this.gridId = null;
-		},
-
-		setPosition: function setPosition() {
-			var element = this.element,
-			    cell = this.containerCell,
-			    cellRect = cell.getBoundingClientRect();
-
-			var top = _helpers2.default.toPixels(cellRect.top),
-			    left = _helpers2.default.toPixels(cellRect.left);
-
-			_helpers2.default.setStyle(element, { top: top, left: left });
-		},
-
-		setDimensions: function setDimensions() {
-			var element = this.element,
-			    cell = this.containerCell,
-			    cellRect = cell.getBoundingClientRect(),
-			    width = _helpers2.default.toPixels(cellRect.width),
-			    height = _helpers2.default.toPixels(cellRect.height);
-
-			_helpers2.default.setStyle(element, { width: width, height: height });
-		},
-
-		resizeHandler: function resizeHandler() {
-			this.setPosition();
-			this.setDimensions();
-		}
-	};
-
-	exports.default = SoundBites;
-
-/***/ },
-/* 12 */
+/* 10 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -7716,7 +7695,7 @@
 	exports.default = Sequencer;
 
 /***/ },
-/* 13 */
+/* 11 */
 /***/ function(module, exports) {
 
 	'use strict';
