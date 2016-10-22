@@ -26,10 +26,10 @@ SoundSelector.prototype = {
 				stickyHeader: true,
 				className: 'soundSelector__header',
 				cellClassName: 'soundSelector__cell__header',
-				innerText: ['close', 'select'],
-				ids: ['soundSelector__close', 'soundSelector__select'],
+				innerText: ['', ''],
+				ids: ['soundSelector__close', ''],
 				rows: 1,
-				cols: 2,
+				cols: 1,
 			},
 			{
 				className: 'soundSelector__sounds',
@@ -45,7 +45,7 @@ SoundSelector.prototype = {
 		view.keepCentered()
 		view.hide()
 
-		this.controls.select = view.getCellById('soundSelector__select')
+		// this.controls.select = view.getCellById('soundSelector__select')
 		this.controls.close = view.getCellById('soundSelector__close')
 
 		return view

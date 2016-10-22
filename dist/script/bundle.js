@@ -248,7 +248,7 @@
 
 			//	create a new bite on double tap
 
-			interact(biteClass).on('doubletap', function (event) {
+			interact(biteClass).on('click', function (event) {
 
 				//	to make web audio work properly in iOS
 
@@ -791,7 +791,7 @@
 				}
 
 				if (section.innerText != null) {
-					cell.innerText = section.innerText[i];
+					cell.innerHTML = section.innerText[i];
 				}
 			}
 
@@ -7128,10 +7128,10 @@
 				stickyHeader: true,
 				className: 'soundSelector__header',
 				cellClassName: 'soundSelector__cell__header',
-				innerText: ['close', 'select'],
-				ids: ['soundSelector__close', 'soundSelector__select'],
+				innerText: ['', ''],
+				ids: ['soundSelector__close', ''],
 				rows: 1,
-				cols: 2
+				cols: 1
 			}, {
 				className: 'soundSelector__sounds',
 				cellClassName: 'soundSelector__cell',
@@ -7145,7 +7145,7 @@
 			view.keepCentered();
 			view.hide();
 
-			this.controls.select = view.getCellById('soundSelector__select');
+			// this.controls.select = view.getCellById('soundSelector__select')
 			this.controls.close = view.getCellById('soundSelector__close');
 
 			return view;
@@ -7651,7 +7651,7 @@
 		this.audioManager = audioManager;
 		this.soundBites = soundBites;
 		this.direction = 'columns';
-		this.speed = 350;
+		this.speed = 300;
 		this.minSpeed = 100;
 		this.maxSpeed = 800;
 		this.speedStep = 50;
@@ -7678,7 +7678,7 @@
 
 				iteration++;
 
-				if (iteration > dimension) iteration = 0;
+				if (iteration > dimension - 1) iteration = 0;
 
 				ctx.iteration = iteration;
 
@@ -7703,7 +7703,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var templates = [{ filename: 'between_friends_hi.mp3', color: 'blue' }, { filename: 'celeste_piano_c_e.mp3', color: 'red' }, { filename: 'celeste_piano_g_e.mp3', color: 'green' }];
+	var templates = [{ filename: 'between_friends_hi.mp3', color: 'blue' }, { filename: 'celeste_piano_c_e.mp3', color: 'red' }, { filename: 'celeste_piano_g_e.mp3', color: 'green' }, { filename: 'note_a.mp3', color: 'white' }];
 
 	exports.templates = templates;
 

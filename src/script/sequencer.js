@@ -7,7 +7,7 @@ function Sequencer(soundBites, audioManager, grid) {
 	this.audioManager = audioManager
 	this.soundBites = soundBites
 	this.direction = 'columns'
-	this.speed = 350
+	this.speed = 300
 	this.minSpeed = 100
 	this.maxSpeed = 800
 	this.speedStep = 50
@@ -35,7 +35,7 @@ Sequencer.prototype = {
 
 			iteration++
 
-			if (iteration > dimension) iteration = 0;
+			if (iteration > dimension-1) iteration = 0;
 
 			ctx.iteration = iteration
 

@@ -92,7 +92,7 @@ ViewTemplate.prototype = {
 			}
 
 			if (section.innerText != null) {
-				cell.innerText = section.innerText[i]
+				cell.innerHTML = section.innerText[i]
 			}
 		}
 
