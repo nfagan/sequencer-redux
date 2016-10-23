@@ -56,6 +56,14 @@ SoundBites.prototype = {
 
 	getFilenames: function() {
 		return this.templates.filter(function(template) { template.filename })
+	},
+
+	animateEffectSelection() {
+		this.inuse.map(function(bite) { bite.animateEffectSelection() })
+	},
+
+	clearAnimations(name) {
+		this.inuse.map(function(bite) { bite.clearAnimation(name) })
 	}
 }
 
@@ -77,6 +85,7 @@ function SoundBite(template) {
 	this.filename = template.filename
 	this.color = template.color
 	this.template = template
+	this.animations = {}
 
 	this.element = Helpers.createDiv({ className: this.classNames.base, id: this.id })
 	Helpers.setStyle(this.element, { backgroundColor: this.color })
@@ -188,33 +197,35 @@ SoundBite.prototype = {
 		tl.to(circle, .4, { css: { 'transform': 'scale(2,2)', 'opacity': '0' } })
 		setTimeout( () => document.body.removeChild(circle),400)
 	},
+
+	animatePlaying: function() {
+		let element = this.element,
+			tl = new TimelineMax()
+
+		tl.to(element, .15, { css: { 'transform': 'scale(1.1,1.1)' } })
+			.to(element, .15, { css: { 'transform': 'scale(1,1)' } })
+
+		this.animations.playing = tl
+	},
+
+	animateEffectSelection: function() {
+		let element = this.element,
+			tl = new TimelineMax({ repeat: -1, yoyo: true })
+
+		tl.to(element, 1, { opacity: '.5' })
+
+		this.animations.effects = tl
+	},
+
+	clearAnimation: function(name) {
+		let animations = this.animations,
+			currentAnimation = animations[name]
+
+		if (!currentAnimation) return;
+
+		currentAnimation.seek(0)
+		currentAnimation.kill()
+	}
 }
 
 export default SoundBites
-
-
-// setPosition: function() {
-// 		let element = this.element,
-// 			cell = this.containerCell,
-// 			cellRect = cell.getBoundingClientRect()
-
-// 		let top = Helpers.toPixels(cellRect.top),
-// 			left = Helpers.toPixels(cellRect.left)
-
-// 		Helpers.setStyle(element, { top: top, left: left })
-// 	},
-
-// 	setDimensions: function() {
-// 		let element = this.element,
-// 			cell = this.containerCell,
-// 			cellRect = cell.getBoundingClientRect(),
-// 			width = Helpers.toPixels(cellRect.width),
-// 			height = Helpers.toPixels(cellRect.height)
-
-// 		Helpers.setStyle(element, { width: width, height: height })
-// 	},
-
-// 	resizeHandler: function() {
-// 		this.setPosition()
-// 		this.setDimensions()
-// 	}

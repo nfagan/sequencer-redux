@@ -75,7 +75,8 @@ Interface.prototype = {
 	changeState: function(state, target) {
 		let effects = this.effects,
 			soundSelector = this.soundSelector,
-			grid = this.grid
+			grid = this.grid,
+			soundBites = this.soundBites
 
 		if (state === 'GRID') {
 			effects.hide()
@@ -86,6 +87,7 @@ Interface.prototype = {
 		}
 
 		if (state === 'SELECT_SOUNDS') {
+			soundBites.clearAnimations('effects')
 			effects.hide()
 			grid.hide()
 			soundSelector.show()
@@ -94,10 +96,13 @@ Interface.prototype = {
 		}
 
 		if (state === 'AWAITING_EFFECTS') {
+			soundBites.clearAnimations('effects')
+			soundBites.animateEffectSelection()
 			this.state = state
 		}
 
 		if (state === 'EFFECTS') {
+			soundBites.clearAnimations('effects')
 			grid.hide()
 			soundSelector.hide()
 			effects.show(target)
@@ -154,7 +159,7 @@ Interface.prototype = {
 		let soundSelectorButton = this.grid.controls.newSound,
 			ctx = this
 
-		newSound.addEventListener('click', function() {
+		soundSelectorButton.addEventListener('click', function() {
 			ctx.changeState('SELECT_SOUNDS')
 		})
 
@@ -164,9 +169,14 @@ Interface.prototype = {
 		let closeButton = this.soundSelector.controls.close,
 			ctx = this
 
-		closeButton.addEventListener('click', function() {
-			ctx.changeState('GRID')
-		})
+		interact(closeButton).
+			on('doubletap', function() {
+				ctx.changeState('GRID')
+			})
+
+		// closeButton.addEventListener('click', function() {
+		// 	ctx.changeState('GRID')
+		// })
 	},
 
 	//	sound bites handling while in SoundSelection
@@ -231,6 +241,7 @@ Interface.prototype = {
 		function elementPickup(event) {
 			let target = soundBites.getBiteById(event.target.id)
 			target.beganWithMouseDown = true
+			target.clearAnimation('playing')
 			grid.undock(target, event)
 		}
 

@@ -9,6 +9,7 @@ function ViewTemplate(wrapper, sections, options) {
 
 	this.defaults = {
 		stickyHeaderClassName: 'sticky-header',
+		stickyFooterClassName: 'sticky-footer',
 		contentClassName: 'content',
 		cellClassName: 'cell',
 		rowClassName: 'row'
@@ -35,7 +36,17 @@ ViewTemplate.prototype = {
 
 	createSection: function(section) {
 		let container = this.container,
-			className = section.stickyHeader ? this.defaults.stickyHeaderClassName : this.defaults.contentClassName
+			className
+
+		//	determine which utility class name to add to the section
+
+		if (section.stickyHeader === true) {
+			className = this.defaults.stickyHeaderClassName
+		} else if (section.stickyFooter === true) {
+			className = this.defaults.stickyFooterClassName
+		} else {
+			className = this.defaults.contentClassName
+		}
 
 		section.element = this.createDiv({ className: className })
 

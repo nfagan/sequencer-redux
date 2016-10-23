@@ -12,6 +12,11 @@
   flex-basis: 50px;
   flex-shrink: 0; }
 
+.sticky-footer {
+  order: 3;
+  flex-basis: 50px;
+  flex-shrink: 0; }
+
 .content {
   height: 100%;
   order: 2;

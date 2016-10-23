@@ -42,6 +42,7 @@ Sequencer.prototype = {
 			if (dockedBites.length === 0) return;
 
 			for (let i=0; i<dockedBites.length; i++) {
+				dockedBites[i].animatePlaying()
 				audioManager.processAndPlay(dockedBites[i])
 			}
 
@@ -59,7 +60,7 @@ Sequencer.prototype = {
 
 	toggleDirection: function() {
 		this.direction = this.direction === 'columns' ? 'rows' : 'columns'
-		
+
 		this.pause()
 		this.loop()
 	}

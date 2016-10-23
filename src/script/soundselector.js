@@ -23,15 +23,6 @@ SoundSelector.prototype = {
 		let view = new ViewTemplate(
 			this.container,
 			[{
-				stickyHeader: true,
-				className: 'soundSelector__header',
-				cellClassName: 'soundSelector__cell__header',
-				innerText: ['', ''],
-				ids: ['soundSelector__close', ''],
-				rows: 1,
-				cols: 1,
-			},
-			{
 				className: 'soundSelector__sounds',
 				cellClassName: 'soundSelector__cell',
 				rowClassName: 'soundSelector__row',
@@ -41,12 +32,43 @@ SoundSelector.prototype = {
 			}],
 			{ name: 'soundSelector' })
 
+		// let view = new ViewTemplate(
+		// 	this.container,
+		// 	[{
+		// 		stickyHeader: true,
+		// 		className: 'soundSelector__header',
+		// 		cellClassName: 'soundSelector__cell__header',
+		// 		innerText: ['', ''],
+		// 		ids: ['soundSelector__close', ''],
+		// 		rows: 1,
+		// 		cols: 1,
+		// 	},
+		// 	{
+		// 		className: 'soundSelector__sounds',
+		// 		cellClassName: 'soundSelector__cell',
+		// 		rowClassName: 'soundSelector__row',
+		// 		rows: nRows,
+		// 		cols: nCols,
+		// 		ids: []
+		// 	},
+		// 	{
+		// 		stickyFooter: true,
+		// 		className: 'soundSelector__footer',
+		// 		cellClassName: 'soundSelector__cell__footer',
+		// 		rows: 1,
+		// 		cols: 1
+		// 	}
+		// 	],
+		// 	{ name: 'soundSelector' })
+
 		view.addToDocument()
 		view.keepCentered()
 		view.hide()
 
 		// this.controls.select = view.getCellById('soundSelector__select')
-		this.controls.close = view.getCellById('soundSelector__close')
+		// this.controls.close = view.getCellById('soundSelector__close')
+
+		this.controls.close = view.getSectionByClassName('soundSelector__sounds')[0].element
 
 		return view
 

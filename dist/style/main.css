@@ -4,7 +4,7 @@
   border-radius: 50%; }
 
 .soundbite__grid__docked {
-  border-radius: 0%;
+  border-radius: 10%;
   height: 100%;
   width: 100%; }
 
@@ -23,6 +23,11 @@
 
 .sticky-header {
   order: 1;
+  flex-basis: 50px;
+  flex-shrink: 0; }
+
+.sticky-footer {
+  order: 3;
   flex-basis: 50px;
   flex-shrink: 0; }
 
@@ -102,6 +107,15 @@
 .soundSelector__row {
   height: 100px;
   min-height: 100px; }
+
+.soundSelector__sounds {
+  padding-top: 50px; }
+
+.soundSelector__sounds .soundSelector__row:nth-child(3) {
+  padding-top: 50px; }
+
+.soundSelector__sounds .soundSelector__row:last-child {
+  padding-bottom: 50px; }
 
 .soundSelector__cell {
   height: 100%;

@@ -19,6 +19,22 @@
 	min-height: 100px;	
 }
 
+//	begin debug
+
+.soundSelector__sounds {
+	padding-top: 50px;
+}
+
+.soundSelector__sounds .soundSelector__row:nth-child(3) { 
+	padding-top: 50px;
+}
+
+.soundSelector__sounds .soundSelector__row:last-child {
+	padding-bottom: 50px;
+}
+
+//	end debug
+
 .soundSelector__cell {
 	height: 100%;
 	@include flexVerticalCenter;
