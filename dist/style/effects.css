@@ -24,6 +24,7 @@
   flex-basis: 200px; }
 
 .effects__cell__header {
+  cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center; }

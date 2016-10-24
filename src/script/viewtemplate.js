@@ -38,6 +38,10 @@ ViewTemplate.prototype = {
 		let container = this.container,
 			className
 
+		//	debug -- toggle section creation
+
+		if (section.enabled === false) return;
+
 		//	determine which utility class name to add to the section
 
 		if (section.stickyHeader === true) {

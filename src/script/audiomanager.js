@@ -1,9 +1,24 @@
+const Tuna = require('tunajs')
+
 function AudioManager(filenames) {
 	this.context = new (window.AudioContext || window.webkitAudioContext)()
 	this.params = this.getDefaultAudioParams()
 	this.buffers = []
 	this.filenames = filenames
 	this.playedDummySound = false	//	for proper iOS audio
+	this.tuna = new Tuna(this.context)
+
+	this.tunaEffects = {
+		chorus: new this.tuna.Chorus({
+			rate: this.getFullValue(this.params.chorus)
+		}),
+		delay: new this.tuna.Delay({
+			feedback: .3,
+			delayTime: 150,
+			wetLevel: this.getFullValue(this.params.delay),
+			dryLevel: 1
+		})
+	}
 }
 
 AudioManager.prototype = {
@@ -45,7 +60,20 @@ AudioManager.prototype = {
 				value: .5,
 				min: -12,
 				max: 12,
+			},
+			chorus: {
+				enabled: true,
+				value: 0,
+				min: .01,
+				max: 4
+			},
+			delay: {
+				enabled: true,
+				value: 0,
+				min: 0,
+				max: 1
 			}
+
 		}
 	},
 
@@ -139,7 +167,9 @@ AudioManager.prototype = {
 			filter = context.createBiquadFilter(),
 			source = context.createBufferSource(),
 			params = this.params,
-			duration = buffer.duration
+			duration = buffer.duration,
+			chorus = this.tunaEffects.chorus,
+			delay = this.tunaEffects.delay
 
 		//	overwrite the default parameters as necessary
 
@@ -185,17 +215,6 @@ AudioManager.prototype = {
 			gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
 		}
 
-		// if (params.envelope.enabled) {
-		// 	let now = context.currentTime,
-		// 		attack = now + params.envelope.attack*duration,
-		// 		release = attack + params.envelope.release*duration
-
-		// 	gain.gain.cancelScheduledValues(0)
-		// 	gain.gain.setValueAtTime(0, now)
-		// 	gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
-		// 	gain.gain.linearRampToValueAtTime(0, release)
-		// }
-
 		//	handle filtering
 
 		filter.type = 'lowpass'
@@ -216,6 +235,24 @@ AudioManager.prototype = {
 			let absoluteFrequency = Math.round(this.transformToFullValue(minFreq, maxFreq, freq))
 
 			filter.frequency.value = absoluteFrequency
+		}
+
+		//	handle chorus
+
+		if ((params.chorus.enabled) && (params.chorus.value > 0)) {
+			chorus.rate = this.getFullValue(params.chorus)
+			chorus.bypass = false
+		} else {
+			chorus.bypass = true
+		}
+
+		//	handle delay
+
+		if ((params.delay.enabled) && (params.delay.value > 0)) {
+			delay.wetLevel = this.getFullValue(params.delay)
+			delay.bypass = false
+		} else {
+			delay.bypass = true
 		}
 
 		//	handle clip start offset
@@ -242,7 +279,10 @@ AudioManager.prototype = {
 		source.buffer = buffer
 		source.connect(filter)
 		filter.connect(gain)
-		gain.connect(context.destination)
+		gain.connect(chorus)
+		chorus.connect(delay)
+		delay.connect(context.destination)
+		// gain.connect(context.destination)
 
 		source.start(0, startOffset)
 	},
@@ -271,3 +311,15 @@ AudioManager.prototype = {
 }
 
 export default AudioManager
+
+
+// if (params.envelope.enabled) {
+// 	let now = context.currentTime,
+// 		attack = now + params.envelope.attack*duration,
+// 		release = attack + params.envelope.release*duration
+
+// 	gain.gain.cancelScheduledValues(0)
+// 	gain.gain.setValueAtTime(0, now)
+// 	gain.gain.linearRampToValueAtTime(gainAdjustment, attack)
+// 	gain.gain.linearRampToValueAtTime(0, release)
+// }

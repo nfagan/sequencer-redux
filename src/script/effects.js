@@ -9,13 +9,16 @@ function Effects(container) {
 	this.controls = {}
 	this.effects = {}
 
+	//	note: changed effects from reverse + region to
+	//	chorus + delay -- may want to change this back
+
 	this.effectTemplates = [
 		{ name: 'gain', innerText: '&#128266;' },
 		{ name: 'filter', innerText: '&#128584;' },
 		{ name: 'pitch', innerText: '&#128585;' },
 		{ name: 'attack', innerText: '&#128586;' },
-		{ name: 'region', innerText: '&#127881;' },
-		{ name: 'reverse', innerText: '&#127803;' }
+		{ name: 'chorus', innerText: '&#127803;' },
+		{ name: 'delay', innerText: '&#127881;' }
 	]
 
 	this.soundBite = null
@@ -51,6 +54,16 @@ Effects.prototype = {
 				rows: 0,
 				cols: 2,
 				ids: []
+			},
+			{
+				enabled: true,
+				stickyFooter: true,
+				className: 'effects__footer',
+				cellClassName: 'effects__cell__header',
+				innerText: [''],
+				rows: 0,
+				cols: 1
+
 			}],
 			{ name: 'effects' })
 

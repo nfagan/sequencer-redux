@@ -32,6 +32,7 @@
 }
 
 .effects__cell__header {
+	cursor: pointer;
 	@include flexVerticalCenter;
 }
 

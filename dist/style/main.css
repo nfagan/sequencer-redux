@@ -1,7 +1,8 @@
 .soundbite {
   height: 50px;
   width: 50px;
-  border-radius: 50%; }
+  border-radius: 50%;
+  cursor: pointer; }
 
 .soundbite__grid__docked {
   border-radius: 10%;
@@ -75,6 +76,7 @@
   flex-basis: 200px; }
 
 .effects__cell__header {
+  cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center; }

@@ -16,6 +16,7 @@
     "express": "^4.14.0",
     "gsap": "^1.19.0",
     "interact.js": "^1.2.6",
+    "tunajs": "^1.0.0",
     "webpack": "^1.13.2"
   },
   "devDependencies": {

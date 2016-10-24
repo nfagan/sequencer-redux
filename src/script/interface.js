@@ -80,6 +80,7 @@ Interface.prototype = {
 			soundBites = this.soundBites
 
 		if (state === 'GRID') {
+			soundBites.clearAnimations('effects')
 			effects.hide()
 			soundSelector.hide()
 			grid.show()
@@ -145,7 +146,9 @@ Interface.prototype = {
 			ctx = this
 
 		effectsButton.addEventListener('click', function() {
-			ctx.changeState('AWAITING_EFFECTS')
+			ctx.state === 'AWAITING_EFFECTS' ? ctx.changeState('GRID') : ctx.changeState('AWAITING_EFFECTS')
+
+			// ctx.changeState('AWAITING_EFFECTS')
 			ctx.animateButtonPress(effectsButton)
 		})
 	},
@@ -300,7 +303,7 @@ Interface.prototype = {
 			body = document.querySelector('body'),
 			fontSize = window.getComputedStyle(body).getPropertyValue('font-size')
 
-		tl.to(element, .15, { css: { 'fontSize': '30px' } })
+		tl.to(element, .15, { css: { 'fontSize': '16px' } })
 			.to(element, .15, { css: { 'fontSize': fontSize } })
 	}
 
