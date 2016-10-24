@@ -1,3 +1,3 @@
 import Interface from './interface.js'
 
-let d = new Interface()
+let controller = new Interface()

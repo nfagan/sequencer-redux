@@ -4,6 +4,7 @@ function Sequencer(soundBites, audioManager, grid) {
 		columns: grid.dimensions.cols,
 		rows: grid.dimensions.rows
 	}
+	this.grid = grid
 	this.audioManager = audioManager
 	this.soundBites = soundBites
 	this.direction = 'columns'
@@ -26,6 +27,8 @@ Sequencer.prototype = {
 			audioManager = this.audioManager,
 			ctx = this,
 			dimension = this.dimensions[direction]
+
+		this.grid.setControlText('play', 'pause')
 
 		this.isPlaying = true
 
@@ -52,6 +55,7 @@ Sequencer.prototype = {
 	pause: function() {
 		clearInterval(this.loopId)
 		this.isPlaying = false
+		this.grid.setControlText('play', 'play')
 	},
 
 	togglePlaying: function() {
@@ -60,7 +64,7 @@ Sequencer.prototype = {
 
 	toggleDirection: function() {
 		this.direction = this.direction === 'columns' ? 'rows' : 'columns'
-
+		this.grid.toggleControlOrientation('direction')
 		this.pause()
 		this.loop()
 	}

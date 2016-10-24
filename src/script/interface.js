@@ -8,6 +8,7 @@ import Sequencer from './sequencer.js'
 import { templates } from './audiotemplates.js'
 
 const interact = require('interact.js')
+require('../../node_modules/gsap/src/minified/TweenMax.min.js')
 
 /*
 	Inteface interfaces between all views -- grid view, 
@@ -117,19 +118,23 @@ Interface.prototype = {
 
 	handleSequencerPlayButton: function() {
 		let playButton = this.grid.controls.play,
-			sequencer = this.sequencer
+			sequencer = this.sequencer,
+			ctx = this
 
 		playButton.addEventListener('click', function() {
 			sequencer.togglePlaying()
+			ctx.animateButtonPress(playButton)
 		})
 	},
 
 	handleSequencerDirectionButton: function() {
 		let directionButton = this.grid.controls.direction,
-			sequencer = this.sequencer
+			sequencer = this.sequencer,
+			ctx = this
 
 		directionButton.addEventListener('click', function() {
 			sequencer.toggleDirection()
+			ctx.animateButtonPress(directionButton)
 		})
 	},
 
@@ -141,6 +146,7 @@ Interface.prototype = {
 
 		effectsButton.addEventListener('click', function() {
 			ctx.changeState('AWAITING_EFFECTS')
+			ctx.animateButtonPress(effectsButton)
 		})
 	},
 
@@ -161,6 +167,7 @@ Interface.prototype = {
 
 		soundSelectorButton.addEventListener('click', function() {
 			ctx.changeState('SELECT_SOUNDS')
+			ctx.animateButtonPress(soundSelectorButton)
 		})
 
 	},
@@ -284,6 +291,17 @@ Interface.prototype = {
 			.on('doubletap', function(event) {
 				effectSelection(event)
 			})
+	},
+
+	//	animations
+
+	animateButtonPress: function(element) {
+		let tl = new TimelineMax(),
+			body = document.querySelector('body'),
+			fontSize = window.getComputedStyle(body).getPropertyValue('font-size')
+
+		tl.to(element, .15, { css: { 'fontSize': '30px' } })
+			.to(element, .15, { css: { 'fontSize': fontSize } })
 	}
 
 }

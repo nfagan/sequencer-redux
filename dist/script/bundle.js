@@ -52,7 +52,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var d = new _interface2.default();
+	var controller = new _interface2.default();
 
 /***/ },
 /* 1 */
@@ -97,6 +97,7 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var interact = __webpack_require__(5);
+	__webpack_require__(10);
 
 	/*
 		Inteface interfaces between all views -- grid view, 
@@ -207,19 +208,23 @@
 
 		handleSequencerPlayButton: function handleSequencerPlayButton() {
 			var playButton = this.grid.controls.play,
-			    sequencer = this.sequencer;
+			    sequencer = this.sequencer,
+			    ctx = this;
 
 			playButton.addEventListener('click', function () {
 				sequencer.togglePlaying();
+				ctx.animateButtonPress(playButton);
 			});
 		},
 
 		handleSequencerDirectionButton: function handleSequencerDirectionButton() {
 			var directionButton = this.grid.controls.direction,
-			    sequencer = this.sequencer;
+			    sequencer = this.sequencer,
+			    ctx = this;
 
 			directionButton.addEventListener('click', function () {
 				sequencer.toggleDirection();
+				ctx.animateButtonPress(directionButton);
 			});
 		},
 
@@ -231,6 +236,7 @@
 
 			effectsButton.addEventListener('click', function () {
 				ctx.changeState('AWAITING_EFFECTS');
+				ctx.animateButtonPress(effectsButton);
 			});
 		},
 
@@ -251,6 +257,7 @@
 
 			soundSelectorButton.addEventListener('click', function () {
 				ctx.changeState('SELECT_SOUNDS');
+				ctx.animateButtonPress(soundSelectorButton);
 			});
 		},
 
@@ -370,6 +377,16 @@
 			.on('doubletap', function (event) {
 				effectSelection(event);
 			});
+		},
+
+		//	animations
+
+		animateButtonPress: function animateButtonPress(element) {
+			var tl = new TimelineMax(),
+			    body = document.querySelector('body'),
+			    fontSize = window.getComputedStyle(body).getPropertyValue('font-size');
+
+			tl.to(element, .15, { css: { 'fontSize': '30px' } }).to(element, .15, { css: { 'fontSize': fontSize } });
 		}
 
 	};
@@ -6938,6 +6955,10 @@
 		this.cells = [];
 		this.controls = null;
 		this.soundSelector = null;
+		this.controlText = {
+			play: '&#128075;',
+			pause: '&#9995;'
+		};
 
 		this.view = this.create();
 	}
@@ -7051,7 +7072,7 @@
 			//	define the control text and ids
 
 			var controlIds = ['play', 'direction', 'effects', 'newSound'],
-			    controlText = ['&#128075;', '&#128064;', '&#10071;', '+'];
+			    controlText = [this.controlText.pause, '&#128064;', '&#10071;', '+'];
 
 			//	create the basic grid from the ViewTemplate
 
@@ -7124,6 +7145,43 @@
 
 		show: function show() {
 			this.view.show();
+		},
+
+		setControlText: function setControlText(control, text) {
+			this.errorIfNonExistentControl(control);
+			this.errorIfNonExistentText(text);
+
+			var element = this.controls[control];
+			element.innerHTML = this.controlText[text];
+		},
+
+		toggleControlOrientation: function toggleControlOrientation(control) {
+			this.errorIfNonExistentControl(control);
+
+			var element = this.controls[control],
+			    classes = element.classList;
+
+			if (!classes.contains('upside-down')) {
+				element.classList.add('upside-down');
+			} else {
+				element.classList.remove('upside-down');
+			}
+		},
+
+		errorIfNonExistentControl: function errorIfNonExistentControl(control) {
+			var controlKeys = Object.keys(this.controls);
+
+			if (controlKeys.indexOf(control) === -1) {
+				throw new Error('Could not find requested control');
+			}
+		},
+
+		errorIfNonExistentText: function errorIfNonExistentText(text) {
+			var textKeys = Object.keys(this.controlText);
+
+			if (textKeys.indexOf(text) === -1) {
+				throw new Error('Could not find requested text');
+			}
 		}
 	};
 
@@ -7817,6 +7875,7 @@
 			columns: grid.dimensions.cols,
 			rows: grid.dimensions.rows
 		};
+		this.grid = grid;
 		this.audioManager = audioManager;
 		this.soundBites = soundBites;
 		this.direction = 'columns';
@@ -7838,6 +7897,8 @@
 			    audioManager = this.audioManager,
 			    ctx = this,
 			    dimension = this.dimensions[direction];
+
+			this.grid.setControlText('play', 'pause');
 
 			this.isPlaying = true;
 
@@ -7863,6 +7924,7 @@
 		pause: function pause() {
 			clearInterval(this.loopId);
 			this.isPlaying = false;
+			this.grid.setControlText('play', 'play');
 		},
 
 		togglePlaying: function togglePlaying() {
@@ -7871,7 +7933,7 @@
 
 		toggleDirection: function toggleDirection() {
 			this.direction = this.direction === 'columns' ? 'rows' : 'columns';
-
+			this.grid.toggleControlOrientation('direction');
 			this.pause();
 			this.loop();
 		}

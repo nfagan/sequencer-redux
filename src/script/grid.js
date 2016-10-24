@@ -12,6 +12,10 @@ function Grid(container) {
 	this.cells = []
 	this.controls = null
 	this.soundSelector = null
+	this.controlText = {
+		play: '&#128075;',
+		pause: '&#9995;'
+	}
 
 	this.view = this.create()
 }
@@ -120,7 +124,7 @@ Grid.prototype = {
 		//	define the control text and ids
 
 		let controlIds = ['play', 'direction', 'effects', 'newSound'],
-			controlText = ['&#128075;', '&#128064;', '&#10071;', '+']
+			controlText = [this.controlText.pause, '&#128064;', '&#10071;', '+']
 
 		//	create the basic grid from the ViewTemplate
 
@@ -194,7 +198,44 @@ Grid.prototype = {
 
 	hide: function() { this.view.hide() },
 
-	show: function() { this.view.show() }
+	show: function() { this.view.show() },
+
+	setControlText: function(control, text) {
+		this.errorIfNonExistentControl(control)
+		this.errorIfNonExistentText(text)
+
+		let element = this.controls[control]
+		element.innerHTML = this.controlText[text]
+	},
+
+	toggleControlOrientation: function(control) {
+		this.errorIfNonExistentControl(control)
+
+		let element = this.controls[control],
+			classes = element.classList
+
+		if (!classes.contains('upside-down')) {
+			element.classList.add('upside-down')
+		} else {
+			element.classList.remove('upside-down')
+		}
+	},
+
+	errorIfNonExistentControl: function(control) {
+		let controlKeys = Object.keys(this.controls)
+
+		if (controlKeys.indexOf(control) === -1) {
+			throw new Error('Could not find requested control')
+		}
+	},
+
+	errorIfNonExistentText: function(text) {
+		let textKeys = Object.keys(this.controlText)
+
+		if (textKeys.indexOf(text) === -1) {
+			throw new Error('Could not find requested text')
+		}
+	}
 }
 
 export default Grid

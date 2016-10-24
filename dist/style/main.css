@@ -92,7 +92,11 @@
 .grid__cell__controls {
   display: flex;
   justify-content: center;
-  align-items: center; }
+  align-items: center;
+  cursor: pointer; }
+
+.upside-down {
+  transform: rotate(-180deg); }
 
 .soundSelector__container {
   position: fixed;
