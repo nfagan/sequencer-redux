@@ -119,6 +119,7 @@
 		});
 
 		//	create the views
+
 		var audioManager = new _audiomanager2.default(filenames),
 		    effects = new _effects2.default(effectsContainer),
 		    grid = new _grid2.default(gridContainer),
@@ -192,6 +193,8 @@
 				effects.hide();
 				soundSelector.hide();
 				grid.hide();
+
+				this.state = state;
 			}
 
 			if (state === 'SELECT_SOUNDS') {
@@ -206,6 +209,7 @@
 			if (state === 'AWAITING_EFFECTS') {
 				soundBites.clearAnimations('effects');
 				soundBites.animateEffectSelection();
+
 				this.state = state;
 			}
 
@@ -223,6 +227,8 @@
 
 		//	sequencer controls
 
+		//	play button
+
 		handleSequencerPlayButton: function handleSequencerPlayButton() {
 			var playButton = this.grid.controls.play,
 			    sequencer = this.sequencer,
@@ -233,6 +239,8 @@
 				ctx.animateButtonPress(playButton);
 			});
 		},
+
+		//	change direction -- row or columnwise
 
 		handleSequencerDirectionButton: function handleSequencerDirectionButton() {
 			var directionButton = this.grid.controls.direction,
@@ -245,7 +253,10 @@
 			});
 		},
 
-		//	effect control handlers
+		//	effect controls
+
+		//	change the state such that, upon clicking a soundbite
+		//	the effects view will show
 
 		handleEffectsButton: function handleEffectsButton() {
 			var effectsButton = this.grid.controls.effects,
@@ -253,11 +264,11 @@
 
 			effectsButton.addEventListener('click', function () {
 				ctx.state === 'AWAITING_EFFECTS' ? ctx.changeState('GRID') : ctx.changeState('AWAITING_EFFECTS');
-
-				// ctx.changeState('AWAITING_EFFECTS')
 				ctx.animateButtonPress(effectsButton);
 			});
 		},
+
+		//	close the effects view and return to the grid
 
 		handleEffectsCloseButton: function handleEffectsCloseButton() {
 			var closeButton = this.effects.controls.close,
@@ -270,6 +281,8 @@
 
 		//	sound selector control handlers
 
+		//	show the sound selector view
+
 		handleSoundSelectorButton: function handleSoundSelectorButton() {
 			var soundSelectorButton = this.grid.controls.newSound,
 			    ctx = this;
@@ -279,6 +292,9 @@
 				ctx.animateButtonPress(soundSelectorButton);
 			});
 		},
+
+		//	close the sound selector view and return
+		//	to the grid upon DOUBLE-TAP of container
 
 		handleSoundSelectorCloseButton: function handleSoundSelectorCloseButton() {
 			var closeButton = this.soundSelector.controls.close,
@@ -303,7 +319,7 @@
 			    oneBite = soundBites.original[0],
 			    biteClass = '.' + oneBite.classNames.dockedInSoundSelector;
 
-			//	create a new bite on double tap
+			//	create a new bite on touch-down
 
 			interact(biteClass).on('down', function (event) {
 
@@ -333,6 +349,8 @@
 				soundBites.createBite(template);
 			});
 		},
+
+		//	enable soundbite drag + drop
 
 		handleGridSoundBites: function handleGridSoundBites() {
 			var soundBites = this.soundBites,
@@ -7266,35 +7284,6 @@
 				ids: []
 			}], { name: 'soundSelector' });
 
-			// let view = new ViewTemplate(
-			// 	this.container,
-			// 	[{
-			// 		stickyHeader: true,
-			// 		className: 'soundSelector__header',
-			// 		cellClassName: 'soundSelector__cell__header',
-			// 		innerText: ['', ''],
-			// 		ids: ['soundSelector__close', ''],
-			// 		rows: 1,
-			// 		cols: 1,
-			// 	},
-			// 	{
-			// 		className: 'soundSelector__sounds',
-			// 		cellClassName: 'soundSelector__cell',
-			// 		rowClassName: 'soundSelector__row',
-			// 		rows: nRows,
-			// 		cols: nCols,
-			// 		ids: []
-			// 	},
-			// 	{
-			// 		stickyFooter: true,
-			// 		className: 'soundSelector__footer',
-			// 		cellClassName: 'soundSelector__cell__footer',
-			// 		rows: 1,
-			// 		cols: 1
-			// 	}
-			// 	],
-			// 	{ name: 'soundSelector' })
-
 			view.addToDocument();
 			view.keepCentered();
 			view.hide();
@@ -7330,6 +7319,35 @@
 	};
 
 	exports.default = SoundSelector;
+
+	// let view = new ViewTemplate(
+	// 	this.container,
+	// 	[{
+	// 		stickyHeader: true,
+	// 		className: 'soundSelector__header',
+	// 		cellClassName: 'soundSelector__cell__header',
+	// 		innerText: ['', ''],
+	// 		ids: ['soundSelector__close', ''],
+	// 		rows: 1,
+	// 		cols: 1,
+	// 	},
+	// 	{
+	// 		className: 'soundSelector__sounds',
+	// 		cellClassName: 'soundSelector__cell',
+	// 		rowClassName: 'soundSelector__row',
+	// 		rows: nRows,
+	// 		cols: nCols,
+	// 		ids: []
+	// 	},
+	// 	{
+	// 		stickyFooter: true,
+	// 		className: 'soundSelector__footer',
+	// 		cellClassName: 'soundSelector__cell__footer',
+	// 		rows: 1,
+	// 		cols: 1
+	// 	}
+	// 	],
+	// 	{ name: 'soundSelector' })
 
 /***/ },
 /* 8 */
@@ -10247,7 +10265,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var templates = [{ filename: 'perc_kick.mp3', color: 'blue' }, { filename: 'analog_hi.mp3', color: 'red' }, { filename: 'between_friends_hi.mp3', color: 'green' }, { filename: 'note_a.mp3', color: 'white' }, { filename: 'note_c.mp3', color: 'brown' }, { filename: 'toy_piano_a.mp3', color: 'orange' }, { filename: 'perc_moondog.mp3', color: 'pink' }, { filename: 'perc_woodblock_low.mp3', color: 'teal' }];
+	var templates = [{ filename: 'perc_kick.mp3', color: 'blue' }, { filename: 'analog_hi.mp3', color: 'red' }, { filename: 'between_friends_hi.mp3', color: 'green' }, { filename: 'note_a.mp3', color: 'white' }, { filename: 'piano_g.mp3', color: 'brown' }, { filename: 'guitar_e.mp3', color: 'orange' }, { filename: 'perc_moondog.mp3', color: 'pink' }, { filename: 'perc_woodblock_low.mp3', color: 'teal' }];
 
 	exports.templates = templates;
 

@@ -32,35 +32,6 @@ SoundSelector.prototype = {
 			}],
 			{ name: 'soundSelector' })
 
-		// let view = new ViewTemplate(
-		// 	this.container,
-		// 	[{
-		// 		stickyHeader: true,
-		// 		className: 'soundSelector__header',
-		// 		cellClassName: 'soundSelector__cell__header',
-		// 		innerText: ['', ''],
-		// 		ids: ['soundSelector__close', ''],
-		// 		rows: 1,
-		// 		cols: 1,
-		// 	},
-		// 	{
-		// 		className: 'soundSelector__sounds',
-		// 		cellClassName: 'soundSelector__cell',
-		// 		rowClassName: 'soundSelector__row',
-		// 		rows: nRows,
-		// 		cols: nCols,
-		// 		ids: []
-		// 	},
-		// 	{
-		// 		stickyFooter: true,
-		// 		className: 'soundSelector__footer',
-		// 		cellClassName: 'soundSelector__cell__footer',
-		// 		rows: 1,
-		// 		cols: 1
-		// 	}
-		// 	],
-		// 	{ name: 'soundSelector' })
-
 		view.addToDocument()
 		view.keepCentered()
 		view.hide()
@@ -94,3 +65,32 @@ SoundSelector.prototype = {
 }
 
 export default SoundSelector
+
+// let view = new ViewTemplate(
+// 	this.container,
+// 	[{
+// 		stickyHeader: true,
+// 		className: 'soundSelector__header',
+// 		cellClassName: 'soundSelector__cell__header',
+// 		innerText: ['', ''],
+// 		ids: ['soundSelector__close', ''],
+// 		rows: 1,
+// 		cols: 1,
+// 	},
+// 	{
+// 		className: 'soundSelector__sounds',
+// 		cellClassName: 'soundSelector__cell',
+// 		rowClassName: 'soundSelector__row',
+// 		rows: nRows,
+// 		cols: nCols,
+// 		ids: []
+// 	},
+// 	{
+// 		stickyFooter: true,
+// 		className: 'soundSelector__footer',
+// 		cellClassName: 'soundSelector__cell__footer',
+// 		rows: 1,
+// 		cols: 1
+// 	}
+// 	],
+// 	{ name: 'soundSelector' })

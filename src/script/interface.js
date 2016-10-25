@@ -28,6 +28,7 @@ function Interface() {
 	let filenames = templates.map(function(temp) { return temp.filename })
 
 	//	create the views
+
 	let audioManager = new AudioManager(filenames),
 		effects = new Effects(effectsContainer),
 		grid = new Grid(gridContainer),
@@ -102,6 +103,8 @@ Interface.prototype = {
 			effects.hide()
 			soundSelector.hide()
 			grid.hide()
+
+			this.state = state
 		}
 
 		if (state === 'SELECT_SOUNDS') {
@@ -116,6 +119,7 @@ Interface.prototype = {
 		if (state === 'AWAITING_EFFECTS') {
 			soundBites.clearAnimations('effects')
 			soundBites.animateEffectSelection()
+
 			this.state = state
 		}
 
@@ -133,6 +137,8 @@ Interface.prototype = {
 
 	//	sequencer controls
 
+	//	play button
+
 	handleSequencerPlayButton: function() {
 		let playButton = this.grid.controls.play,
 			sequencer = this.sequencer,
@@ -143,6 +149,8 @@ Interface.prototype = {
 			ctx.animateButtonPress(playButton)
 		})
 	},
+
+	//	change direction -- row or columnwise
 
 	handleSequencerDirectionButton: function() {
 		let directionButton = this.grid.controls.direction,
@@ -155,7 +163,10 @@ Interface.prototype = {
 		})
 	},
 
-	//	effect control handlers
+	//	effect controls
+
+	//	change the state such that, upon clicking a soundbite
+	//	the effects view will show
 
 	handleEffectsButton: function() {
 		let effectsButton = this.grid.controls.effects,
@@ -163,11 +174,11 @@ Interface.prototype = {
 
 		effectsButton.addEventListener('click', function() {
 			ctx.state === 'AWAITING_EFFECTS' ? ctx.changeState('GRID') : ctx.changeState('AWAITING_EFFECTS')
-
-			// ctx.changeState('AWAITING_EFFECTS')
 			ctx.animateButtonPress(effectsButton)
 		})
 	},
+
+	//	close the effects view and return to the grid
 
 	handleEffectsCloseButton: function() {
 		let closeButton = this.effects.controls.close,
@@ -180,6 +191,8 @@ Interface.prototype = {
 
 	//	sound selector control handlers
 
+	//	show the sound selector view
+
 	handleSoundSelectorButton: function() {
 		let soundSelectorButton = this.grid.controls.newSound,
 			ctx = this
@@ -190,6 +203,9 @@ Interface.prototype = {
 		})
 
 	},
+
+	//	close the sound selector view and return
+	//	to the grid upon DOUBLE-TAP of container
 
 	handleSoundSelectorCloseButton: function() {
 		let closeButton = this.soundSelector.controls.close,
@@ -215,7 +231,7 @@ Interface.prototype = {
 			oneBite = soundBites.original[0],
 			biteClass = '.' + oneBite.classNames.dockedInSoundSelector
 
-		//	create a new bite on double tap
+		//	create a new bite on touch-down
 
 		interact(biteClass)
 			.on('down', function(event) {
@@ -247,6 +263,8 @@ Interface.prototype = {
 			})
 
 	},
+
+	//	enable soundbite drag + drop
 
 	handleGridSoundBites: function() {
 		let soundBites = this.soundBites,
