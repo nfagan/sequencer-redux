@@ -42,18 +42,28 @@ function Interface() {
 	this.grid = grid
 	this.soundSelector = soundSelector
 
-	//	show the grid only
+	//	hide all elements until sounds are loaded
 
-	this.changeState('SELECT_SOUNDS')
+	this.changeState('HIDDEN')
 
-	//	configure events
+	//	configure events in the background
 
 	this.listen()
 
-	//	start the looping
+	//	load the sounds, then show the sound selection
+	//	view when done
+
+	let ctx = this
 
 	this.audioManager.loadSounds(audioManager.filenames)
 		.then(function() {
+
+			//	show sound selection
+
+			ctx.changeState('SELECT_SOUNDS')
+
+			//	start looping
+			
 			sequencer.loop()
 		})
 }
@@ -86,6 +96,12 @@ Interface.prototype = {
 			grid.show()
 
 			this.state = state
+		}
+
+		if (state === 'HIDDEN') {
+			effects.hide()
+			soundSelector.hide()
+			grid.hide()
 		}
 
 		if (state === 'SELECT_SOUNDS') {

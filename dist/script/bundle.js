@@ -133,17 +133,27 @@
 		this.grid = grid;
 		this.soundSelector = soundSelector;
 
-		//	show the grid only
+		//	hide all elements until sounds are loaded
 
-		this.changeState('SELECT_SOUNDS');
+		this.changeState('HIDDEN');
 
-		//	configure events
+		//	configure events in the background
 
 		this.listen();
 
-		//	start the looping
+		//	load the sounds, then show the sound selection
+		//	view when done
+
+		var ctx = this;
 
 		this.audioManager.loadSounds(audioManager.filenames).then(function () {
+
+			//	show sound selection
+
+			ctx.changeState('SELECT_SOUNDS');
+
+			//	start looping
+
 			sequencer.loop();
 		});
 	}
@@ -176,6 +186,12 @@
 				grid.show();
 
 				this.state = state;
+			}
+
+			if (state === 'HIDDEN') {
+				effects.hide();
+				soundSelector.hide();
+				grid.hide();
 			}
 
 			if (state === 'SELECT_SOUNDS') {
@@ -7582,23 +7598,11 @@
 
 	function AudioManager(filenames) {
 		this.context = new (window.AudioContext || window.webkitAudioContext)();
-		this.params = this.getDefaultAudioParams();
 		this.buffers = [];
 		this.filenames = filenames;
 		this.playedDummySound = false; //	for proper iOS audio
 		this.tuna = new Tuna(this.context);
-
-		this.tunaEffects = {
-			chorus: new this.tuna.Chorus({
-				rate: this.getFullValue(this.params.chorus)
-			}),
-			delay: new this.tuna.Delay({
-				feedback: .3,
-				delayTime: 150,
-				wetLevel: this.getFullValue(this.params.delay),
-				dryLevel: 1
-			})
-		};
+		this.params = this.getDefaultAudioParams();
 	}
 
 	AudioManager.prototype = {
@@ -7652,8 +7656,18 @@
 					value: 0,
 					min: 0,
 					max: 1
+				},
+				tunaEffects: {
+					chorus: new this.tuna.Chorus({
+						rate: .01
+					}),
+					delay: new this.tuna.Delay({
+						feedback: .3,
+						delayTime: 150,
+						wetLevel: 0,
+						dryLevel: 1
+					})
 				}
-
 			};
 		},
 
@@ -7746,8 +7760,8 @@
 			    source = context.createBufferSource(),
 			    params = this.params,
 			    duration = buffer.duration,
-			    chorus = this.tunaEffects.chorus,
-			    delay = this.tunaEffects.delay;
+			    chorus = audioParams.tunaEffects.chorus,
+			    delay = audioParams.tunaEffects.delay;
 
 			//	overwrite the default parameters as necessary
 
@@ -7785,7 +7799,7 @@
 
 			if (params.attack.enabled) {
 				var now = context.currentTime,
-				    attack = now + params.attack.value * duration;
+				    attack = now + params.attack.value * duration + .001;
 
 				gain.gain.cancelScheduledValues(0);
 				gain.gain.setValueAtTime(0, now);
@@ -10233,7 +10247,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var templates = [{ filename: 'perc_kick.mp3', color: 'blue' }, { filename: 'celeste_piano_c_e.mp3', color: 'red' }, { filename: 'between_friends_hi.mp3', color: 'green' }, { filename: 'note_a.mp3', color: 'white' }, { filename: 'note_c.mp3', color: 'brown' }, { filename: 'celeste_piano_c.mp3', color: 'orange' }, { filename: 'perc_moondog.mp3', color: 'pink' }, { filename: 'perc_woodblock_low.mp3', color: 'teal' }];
+	var templates = [{ filename: 'perc_kick.mp3', color: 'blue' }, { filename: 'analog_hi.mp3', color: 'red' }, { filename: 'between_friends_hi.mp3', color: 'green' }, { filename: 'note_a.mp3', color: 'white' }, { filename: 'note_c.mp3', color: 'brown' }, { filename: 'toy_piano_a.mp3', color: 'orange' }, { filename: 'perc_moondog.mp3', color: 'pink' }, { filename: 'perc_woodblock_low.mp3', color: 'teal' }];
 
 	exports.templates = templates;
 

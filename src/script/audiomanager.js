@@ -2,23 +2,11 @@ const Tuna = require('tunajs')
 
 function AudioManager(filenames) {
 	this.context = new (window.AudioContext || window.webkitAudioContext)()
-	this.params = this.getDefaultAudioParams()
 	this.buffers = []
 	this.filenames = filenames
 	this.playedDummySound = false	//	for proper iOS audio
 	this.tuna = new Tuna(this.context)
-
-	this.tunaEffects = {
-		chorus: new this.tuna.Chorus({
-			rate: this.getFullValue(this.params.chorus)
-		}),
-		delay: new this.tuna.Delay({
-			feedback: .3,
-			delayTime: 150,
-			wetLevel: this.getFullValue(this.params.delay),
-			dryLevel: 1
-		})
-	}
+	this.params = this.getDefaultAudioParams()
 }
 
 AudioManager.prototype = {
@@ -72,8 +60,18 @@ AudioManager.prototype = {
 				value: 0,
 				min: 0,
 				max: 1
+			},
+			tunaEffects: {
+				chorus: new this.tuna.Chorus({
+					rate: .01
+				}),
+				delay: new this.tuna.Delay({
+					feedback: .3,
+					delayTime: 150,
+					wetLevel: 0,
+					dryLevel: 1
+				})
 			}
-
 		}
 	},
 
@@ -168,8 +166,8 @@ AudioManager.prototype = {
 			source = context.createBufferSource(),
 			params = this.params,
 			duration = buffer.duration,
-			chorus = this.tunaEffects.chorus,
-			delay = this.tunaEffects.delay
+			chorus = audioParams.tunaEffects.chorus,
+			delay = audioParams.tunaEffects.delay
 
 		//	overwrite the default parameters as necessary
 
@@ -208,7 +206,7 @@ AudioManager.prototype = {
 
 		if (params.attack.enabled) {
 			let now = context.currentTime,
-				attack = now + params.attack.value*duration
+				attack = now + params.attack.value*duration + .001
 
 			gain.gain.cancelScheduledValues(0)
 			gain.gain.setValueAtTime(0, now)
